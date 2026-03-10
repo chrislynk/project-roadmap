@@ -71,7 +71,7 @@ export function AuthModal() {
         </div>
 
         <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: '16px' }}>
+          <div style={{ marginBottom: '16px', marginRight: '8px' }}>
             <label style={{
               display: 'block',
               fontSize: '12px',
@@ -96,6 +96,7 @@ export function AuthModal() {
                 padding: '12px 16px',
                 fontSize: '15px',
                 fontFamily: "'Inter', sans-serif",
+                color: '#374151',
                 border: '2px solid #E8E8F0',
                 borderRadius: '8px',
                 outline: 'none',
@@ -139,6 +140,7 @@ export function AuthModal() {
                 padding: '12px 16px',
                 fontSize: '15px',
                 fontFamily: "'Inter', sans-serif",
+                color: '#374151',
                 border: '2px solid #E8E8F0',
                 borderRadius: '8px',
                 outline: 'none',
