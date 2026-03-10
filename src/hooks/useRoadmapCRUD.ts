@@ -197,6 +197,141 @@ export function useRoadmapCRUD() {
     refresh();
   };
 
+  const addInitiative = async (
+    pillarId: string,
+    initiative: {
+      initiative_id: string;
+      title: string;
+      description?: string;
+      owner?: string;
+      due_date?: string;
+      quarters: string[];
+      acceptance?: string[];
+      position: number;
+    }
+  ) => {
+    if (!isSupabaseConfigured()) {
+      throw new Error('Supabase is not configured');
+    }
+
+    // Get the pillar's internal UUID
+    const { data: pillarData, error: pillarError } = await supabase!
+      .from('pillars')
+      .select('id')
+      .eq('pillar_id', pillarId)
+      .single();
+
+    if (pillarError || !pillarData) {
+      console.error('[CRUD] Failed to find pillar:', pillarError);
+      throw pillarError || new Error('Pillar not found');
+    }
+
+    const { error } = await supabase!
+      .from('initiatives')
+      .insert({
+        pillar_id: pillarData.id,
+        initiative_id: initiative.initiative_id,
+        title: initiative.title,
+        description: initiative.description,
+        owner: initiative.owner,
+        due_date: initiative.due_date,
+        quarters: initiative.quarters,
+        acceptance: initiative.acceptance || [],
+        position: initiative.position,
+      });
+
+    if (error) {
+      console.error('[CRUD] Failed to add initiative:', error);
+      throw error;
+    }
+
+    refresh();
+  };
+
+  const deleteInitiative = async (initiativeId: string) => {
+    if (!isSupabaseConfigured()) {
+      throw new Error('Supabase is not configured');
+    }
+
+    const { error } = await supabase!
+      .from('initiatives')
+      .delete()
+      .eq('initiative_id', initiativeId);
+
+    if (error) {
+      console.error('[CRUD] Failed to delete initiative:', error);
+      throw error;
+    }
+
+    refresh();
+  };
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // PILLAR OPERATIONS
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  const updatePillar = async (
+    pillarId: string,
+    updates: {
+      title?: string;
+      subtitle?: string;
+      icon?: string;
+      color?: string;
+    }
+  ) => {
+    if (!isSupabaseConfigured()) {
+      throw new Error('Supabase is not configured');
+    }
+
+    const { error } = await supabase!
+      .from('pillars')
+      .update({
+        ...updates,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('pillar_id', pillarId);
+
+    if (error) {
+      console.error('[CRUD] Failed to update pillar:', error);
+      throw error;
+    }
+
+    refresh();
+  };
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // PROJECT OPERATIONS
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  const updateProject = async (
+    projectId: string,
+    updates: {
+      title?: string;
+      subtitle?: string;
+      color?: string;
+      wiki_url?: string;
+    }
+  ) => {
+    if (!isSupabaseConfigured()) {
+      throw new Error('Supabase is not configured');
+    }
+
+    const { error } = await supabase!
+      .from('projects')
+      .update({
+        ...updates,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('project_id', projectId);
+
+    if (error) {
+      console.error('[CRUD] Failed to update project:', error);
+      throw error;
+    }
+
+    refresh();
+  };
+
   return {
     // Subtask operations
     updateSubtask,
@@ -210,5 +345,13 @@ export function useRoadmapCRUD() {
 
     // Initiative operations
     updateInitiative,
+    addInitiative,
+    deleteInitiative,
+
+    // Pillar operations
+    updatePillar,
+
+    // Project operations
+    updateProject,
   };
 }

@@ -6,9 +6,13 @@ import { quarterColors } from './utils/constants';
 import { useCheckboxState } from './contexts/CheckboxContext';
 import { useAuth } from './contexts/AuthContext';
 import { useRoadmap } from './contexts/RoadmapContext';
+import { useEdit } from './contexts/EditContext';
 import { AuthModal } from './components/AuthModal';
 import { EditModeToggle } from './components/EditModeToggle';
 import { InlineTextEditor } from './components/InlineTextEditor';
+import { AddSubtaskButton } from './components/AddSubtaskButton';
+import { AddTaskButton } from './components/AddTaskButton';
+import { AddInitiativeButton } from './components/AddInitiativeButton';
 import { useRoadmapCRUD } from './hooks/useRoadmapCRUD';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -38,7 +42,9 @@ function Checkbox({ checked, onChange, color }) {
 }
 
 function SubtaskRow({ subtask, checked, onToggle, color }) {
-  const { updateSubtask } = useRoadmapCRUD();
+  const { updateSubtask, deleteSubtask } = useRoadmapCRUD();
+  const { isEditMode } = useEdit();
+  const [showDelete, setShowDelete] = useState(false);
 
   const handleSaveText = async (newText: string) => {
     if (newText !== subtask.text) {
@@ -52,8 +58,23 @@ function SubtaskRow({ subtask, checked, onToggle, color }) {
     }
   };
 
+  const handleDelete = async () => {
+    if (window.confirm(`Delete subtask "${subtask.text}"?`)) {
+      try {
+        await deleteSubtask(subtask.id);
+      } catch (error) {
+        console.error('Failed to delete subtask:', error);
+        alert('Failed to delete subtask. Please try again.');
+      }
+    }
+  };
+
   return (
-    <div style={{ display: "flex", gap: "8px", padding: "6px 0", alignItems: "flex-start", borderBottom: "1px solid #F3F4F6" }}>
+    <div
+      style={{ display: "flex", gap: "8px", padding: "6px 0", alignItems: "flex-start", borderBottom: "1px solid #F3F4F6", position: "relative" }}
+      onMouseEnter={() => setShowDelete(true)}
+      onMouseLeave={() => setShowDelete(false)}
+    >
       <Checkbox checked={checked} onChange={onToggle} color={color} />
       <InlineTextEditor
         value={subtask.text}
@@ -80,25 +101,99 @@ function SubtaskRow({ subtask, checked, onToggle, color }) {
           minWidth: "70px",
         }}
       />
+      {isEditMode && showDelete && (
+        <button
+          onClick={handleDelete}
+          style={{
+            width: "20px",
+            height: "20px",
+            borderRadius: "4px",
+            border: "1px solid #FCA5A5",
+            background: "#FEF2F2",
+            color: "#DC2626",
+            fontSize: "12px",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+            padding: 0,
+          }}
+          title="Delete subtask"
+        >
+          ×
+        </button>
+      )}
     </div>
   );
 }
 
 function TaskBlock({ task, pillarColor, checkedItems, onToggle }) {
   const [expanded, setExpanded] = useState(false);
+  const [showDelete, setShowDelete] = useState(false);
+  const { addSubtask, updateTask, deleteTask } = useRoadmapCRUD();
+  const { isEditMode } = useEdit();
   const isLearning = task.type === "learning";
   const taskColor = isLearning ? "#F59E0B" : pillarColor;
   const done = task.subtasks.filter(s => checkedItems[s.id]).length;
   const total = task.subtasks.length;
   const pct = total > 0 ? Math.round((done / total) * 100) : 0;
 
+  const handleAddSubtask = async (text: string, due?: string) => {
+    const subtaskId = `${task.id}-subtask-${Date.now()}`;
+    const position = task.subtasks.length;
+
+    await addSubtask(task.id, {
+      subtask_id: subtaskId,
+      text,
+      due,
+      position,
+    });
+  };
+
+  const handleSaveTitle = async (newTitle: string) => {
+    if (newTitle !== task.title) {
+      await updateTask(task.id, { title: newTitle });
+    }
+  };
+
+  const handleSaveDue = async (newDue: string) => {
+    if (newDue !== (task.due || '')) {
+      await updateTask(task.id, { due: newDue || undefined });
+    }
+  };
+
+  const handleDelete = async () => {
+    if (window.confirm(`Delete task "${task.title}" and all its subtasks?`)) {
+      try {
+        await deleteTask(task.id);
+      } catch (error) {
+        console.error('Failed to delete task:', error);
+        alert('Failed to delete task. Please try again.');
+      }
+    }
+  };
+
   return (
-    <div style={{ border: `1px solid ${isLearning ? "#FDE68A" : "#E8E8F0"}`, borderRadius: "8px", overflow: "hidden", marginBottom: "8px", background: isLearning ? "#FFFBEB" : "#FAFAFA" }}>
+    <div
+      style={{ border: `1px solid ${isLearning ? "#FDE68A" : "#E8E8F0"}`, borderRadius: "8px", overflow: "hidden", marginBottom: "8px", background: isLearning ? "#FFFBEB" : "#FAFAFA", position: "relative" }}
+      onMouseEnter={() => setShowDelete(true)}
+      onMouseLeave={() => setShowDelete(false)}
+    >
       <button onClick={() => setExpanded(!expanded)} style={{ width: "100%", background: "none", border: "none", cursor: "pointer", padding: "10px 14px", textAlign: "left", display: "flex", alignItems: "center", gap: "10px" }}>
         <span style={{ fontSize: "13px", flexShrink: 0 }}>{isLearning ? "📚" : "🔧"}</span>
         <div style={{ flex: 1 }}>
           <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-            <span style={{ fontSize: "13px", fontWeight: "600", color: "#1A1A2E", fontFamily: "'Inter', sans-serif" }}>{task.title}</span>
+            <InlineTextEditor
+              value={task.title}
+              onSave={handleSaveTitle}
+              style={{
+                fontSize: "13px",
+                fontWeight: "600",
+                color: "#1A1A2E",
+                fontFamily: "'Inter', sans-serif",
+              }}
+            />
             {isLearning && <span style={{ background: "#FDE68A", color: "#92400E", fontSize: "10px", fontWeight: "700", padding: "1px 6px", borderRadius: "3px", fontFamily: "'DM Mono', monospace" }}>LEARN FIRST</span>}
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "4px" }}>
@@ -106,14 +201,57 @@ function TaskBlock({ task, pillarColor, checkedItems, onToggle }) {
               <div style={{ width: `${pct}%`, height: "100%", background: taskColor, borderRadius: "2px", transition: "width 0.3s" }} />
             </div>
             <span style={{ fontSize: "10px", color: "#6B7280", fontFamily: "'DM Mono', monospace" }}>{done}/{total}</span>
-            {task.due && <span style={{ fontSize: "10px", color: "#9CA3AF", fontFamily: "'DM Mono', monospace" }}>Due {task.due}</span>}
+            <span style={{ fontSize: "10px", color: "#9CA3AF", fontFamily: "'DM Mono', monospace", display: "flex", alignItems: "center", gap: "4px" }}>
+              Due{' '}
+              <InlineTextEditor
+                value={task.due || ''}
+                onSave={handleSaveDue}
+                placeholder="Add date"
+                style={{
+                  fontSize: "10px",
+                  color: "#9CA3AF",
+                  fontFamily: "'DM Mono', monospace",
+                  display: "inline",
+                }}
+              />
+            </span>
           </div>
         </div>
         <span style={{ color: taskColor, fontSize: "14px", transition: "transform 0.2s", transform: expanded ? "rotate(180deg)" : "rotate(0deg)", flexShrink: 0 }}>▾</span>
       </button>
+      {isEditMode && showDelete && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            handleDelete();
+          }}
+          style={{
+            position: "absolute",
+            top: "8px",
+            right: "8px",
+            width: "24px",
+            height: "24px",
+            borderRadius: "6px",
+            border: "1px solid #FCA5A5",
+            background: "#FEF2F2",
+            color: "#DC2626",
+            fontSize: "14px",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 0,
+            fontWeight: "bold",
+          }}
+          title="Delete task"
+        >
+          ×
+        </button>
+      )}
       {expanded && (
         <div style={{ padding: "0 14px 10px", borderTop: "1px solid #F0F0F0" }}>
           {task.subtasks.map(s => <SubtaskRow key={s.id} subtask={s} checked={!!checkedItems[s.id]} onToggle={() => onToggle(s.id)} color={taskColor} />)}
+          <AddSubtaskButton onAdd={handleAddSubtask} color={taskColor} />
         </div>
       )}
     </div>
@@ -123,18 +261,70 @@ function TaskBlock({ task, pillarColor, checkedItems, onToggle }) {
 function InitiativeCard({ initiative, pillarColor, checkedItems, onToggle }) {
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("tasks");
+  const [showDelete, setShowDelete] = useState(false);
+  const { addTask, deleteInitiative, updateInitiative } = useRoadmapCRUD();
+  const { isEditMode } = useEdit();
   const allSubtasks = initiative.tasks.flatMap(t => t.subtasks);
   const done = allSubtasks.filter(s => checkedItems[s.id]).length;
   const total = allSubtasks.length;
   const pct = total > 0 ? Math.round((done / total) * 100) : 0;
 
+  const handleAddTask = async (title: string, type: 'learning' | 'implementation', due?: string) => {
+    const taskId = `${initiative.id}-task-${Date.now()}`;
+    const position = initiative.tasks.length;
+
+    await addTask(initiative.id, {
+      task_id: taskId,
+      title,
+      type,
+      due,
+      position,
+    });
+  };
+
+  const handleSaveTitle = async (newTitle: string) => {
+    if (newTitle !== initiative.title) {
+      await updateInitiative(initiative.id, { title: newTitle });
+    }
+  };
+
+  const handleSaveDueDate = async (newDueDate: string) => {
+    if (newDueDate !== (initiative.dueDate || '')) {
+      await updateInitiative(initiative.id, { due_date: newDueDate || undefined });
+    }
+  };
+
+  const handleDelete = async () => {
+    if (window.confirm(`Delete initiative "${initiative.title}" and all its tasks?`)) {
+      try {
+        await deleteInitiative(initiative.id);
+      } catch (error) {
+        console.error('Failed to delete initiative:', error);
+        alert('Failed to delete initiative. Please try again.');
+      }
+    }
+  };
+
   return (
-    <div style={{ background: "#fff", borderRadius: "12px", border: "1px solid #E8E8F0", overflow: "hidden", boxShadow: open ? "0 4px 24px rgba(0,0,0,0.08)" : "0 1px 4px rgba(0,0,0,0.04)", transition: "box-shadow 0.2s" }}>
+    <div
+      style={{ background: "#fff", borderRadius: "12px", border: "1px solid #E8E8F0", overflow: "hidden", boxShadow: open ? "0 4px 24px rgba(0,0,0,0.08)" : "0 1px 4px rgba(0,0,0,0.04)", transition: "box-shadow 0.2s", position: "relative" }}
+      onMouseEnter={() => setShowDelete(true)}
+      onMouseLeave={() => setShowDelete(false)}
+    >
       <button onClick={() => setOpen(!open)} style={{ width: "100%", background: "none", border: "none", cursor: "pointer", padding: "16px 20px", textAlign: "left", display: "flex", alignItems: "center", gap: "12px" }}>
         <div style={{ width: "4px", height: "40px", borderRadius: "2px", background: pillarColor, flexShrink: 0 }} />
         <div style={{ flex: 1 }}>
           <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-            <span style={{ fontFamily: "'Sora', sans-serif", fontWeight: "700", fontSize: "14px", color: "#1A1A2E" }}>{initiative.title}</span>
+            <InlineTextEditor
+              value={initiative.title}
+              onSave={handleSaveTitle}
+              style={{
+                fontFamily: "'Sora', sans-serif",
+                fontWeight: "700",
+                fontSize: "14px",
+                color: "#1A1A2E",
+              }}
+            />
             <div style={{ display: "flex", gap: "3px" }}>{initiative.quarters.map(q => <QuarterBadge key={q} q={q} />)}</div>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: "5px", flexWrap: "wrap" }}>
@@ -144,11 +334,54 @@ function InitiativeCard({ initiative, pillarColor, checkedItems, onToggle }) {
               </div>
               <span style={{ fontSize: "10px", color: "#6B7280", fontFamily: "'DM Mono', monospace" }}>{pct}% · {done}/{total}</span>
             </div>
-            <span style={{ fontSize: "10px", color: "#9CA3AF", fontFamily: "'DM Mono', monospace" }}>Due {initiative.dueDate}</span>
+            <span style={{ fontSize: "10px", color: "#9CA3AF", fontFamily: "'DM Mono', monospace", display: "flex", alignItems: "center", gap: "4px" }}>
+              Due{' '}
+              <InlineTextEditor
+                value={initiative.dueDate || ''}
+                onSave={handleSaveDueDate}
+                placeholder="Add date"
+                style={{
+                  fontSize: "10px",
+                  color: "#9CA3AF",
+                  fontFamily: "'DM Mono', monospace",
+                  display: "inline",
+                }}
+              />
+            </span>
           </div>
         </div>
         <div style={{ color: pillarColor, fontSize: "16px", transition: "transform 0.2s", transform: open ? "rotate(180deg)" : "rotate(0deg)", flexShrink: 0 }}>▾</div>
       </button>
+      {isEditMode && showDelete && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            handleDelete();
+          }}
+          style={{
+            position: "absolute",
+            top: "12px",
+            right: "12px",
+            width: "28px",
+            height: "28px",
+            borderRadius: "8px",
+            border: "1px solid #FCA5A5",
+            background: "#FEF2F2",
+            color: "#DC2626",
+            fontSize: "16px",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 0,
+            fontWeight: "bold",
+            zIndex: 10,
+          }}
+          title="Delete initiative"
+        >
+          ×
+        </button>
+      )}
       {open && (
         <div style={{ borderTop: "1px solid #F0F0F8" }}>
           <div style={{ padding: "12px 20px 0", display: "flex", gap: "12px", flexWrap: "wrap", alignItems: "flex-start" }}>
@@ -170,6 +403,7 @@ function InitiativeCard({ initiative, pillarColor, checkedItems, onToggle }) {
               <div>
                 <div style={{ fontSize: "11px", color: "#9CA3AF", marginBottom: "10px", fontFamily: "'Inter', sans-serif" }}>📚 <strong style={{ color: "#92400E" }}>Learn First</strong> tasks should be completed before starting implementation tasks.</div>
                 {initiative.tasks.map(task => <TaskBlock key={task.id} task={task} pillarColor={pillarColor} checkedItems={checkedItems} onToggle={onToggle} />)}
+                <AddTaskButton onAdd={handleAddTask} color={pillarColor} />
               </div>
             )}
             {activeTab === "acceptance" && (
@@ -199,7 +433,23 @@ function TimelineBar({ quarters }) {
 }
 
 function PillarSection({ pillar, checkedItems, onToggle }) {
+  const { addInitiative } = useRoadmapCRUD();
   const allQuarters = [...new Set(pillar.initiatives.flatMap(i => i.quarters))].sort();
+
+  const handleAddInitiative = async (title: string, quarters: string[], owner: string, description?: string) => {
+    const initiativeId = `${pillar.id}-initiative-${Date.now()}`;
+    const position = pillar.initiatives.length;
+
+    await addInitiative(pillar.id, {
+      initiative_id: initiativeId,
+      title,
+      quarters,
+      owner,
+      description,
+      position,
+    });
+  };
+
   return (
     <div style={{ marginBottom: "40px" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "16px", padding: "18px 22px", background: `linear-gradient(135deg, ${pillar.color}12, ${pillar.color}04)`, borderRadius: "12px", border: `1.5px solid ${pillar.color}28` }}>
@@ -213,6 +463,7 @@ function PillarSection({ pillar, checkedItems, onToggle }) {
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
         {pillar.initiatives.map(i => <InitiativeCard key={i.id} initiative={i} pillarColor={pillar.color} checkedItems={checkedItems} onToggle={onToggle} />)}
+        <AddInitiativeButton onAdd={handleAddInitiative} color={pillar.color} />
       </div>
     </div>
   );
@@ -256,7 +507,9 @@ function ProjectView({ project, checkedItems, onToggle }) {
 // ─────────────────────────────────────────────────────────────────────────────
 function TaskTableRow({ project, pillar, initiative, task, status, done, total, idx, checkedItems, onToggle, onNavigate }) {
   const [expanded, setExpanded] = useState(false);
-  const { updateSubtask } = useRoadmapCRUD();
+  const [hoveredSubtaskId, setHoveredSubtaskId] = useState<string | null>(null);
+  const { updateSubtask, deleteSubtask, addSubtask } = useRoadmapCRUD();
+  const { isEditMode } = useEdit();
   const isLearning = task.type === "learning";
   const rowColor = isLearning ? "#F59E0B" : pillar.color;
   const pct = total > 0 ? Math.round((done / total) * 100) : 0;
@@ -271,6 +524,29 @@ function TaskTableRow({ project, pillar, initiative, task, status, done, total, 
     if (newDue !== (currentDue || '')) {
       await updateSubtask(subtaskId, { due: newDue || undefined });
     }
+  };
+
+  const handleDeleteSubtask = async (subtaskId: string, subtaskText: string) => {
+    if (window.confirm(`Delete subtask "${subtaskText}"?`)) {
+      try {
+        await deleteSubtask(subtaskId);
+      } catch (error) {
+        console.error('Failed to delete subtask:', error);
+        alert('Failed to delete subtask. Please try again.');
+      }
+    }
+  };
+
+  const handleAddSubtask = async (text: string, due?: string) => {
+    const subtaskId = `${task.id}-subtask-${Date.now()}`;
+    const position = task.subtasks.length;
+
+    await addSubtask(task.id, {
+      subtask_id: subtaskId,
+      text,
+      due,
+      position,
+    });
   };
 
   return (
@@ -319,7 +595,12 @@ function TaskTableRow({ project, pillar, initiative, task, status, done, total, 
           {task.subtasks.map(s => {
             const checked = !!checkedItems[s.id];
             return (
-              <div key={s.id} style={{ display: "flex", gap: "8px", padding: "5px 0", alignItems: "flex-start", borderBottom: "1px solid #EEEEF8" }}>
+              <div
+                key={s.id}
+                style={{ display: "flex", gap: "8px", padding: "5px 0", alignItems: "flex-start", borderBottom: "1px solid #EEEEF8", position: "relative" }}
+                onMouseEnter={() => setHoveredSubtaskId(s.id)}
+                onMouseLeave={() => setHoveredSubtaskId(null)}
+              >
                 <Checkbox checked={checked} onChange={() => onToggle(s.id)} color={rowColor} />
                 <InlineTextEditor
                   value={s.text}
@@ -346,9 +627,33 @@ function TaskTableRow({ project, pillar, initiative, task, status, done, total, 
                     minWidth: "70px",
                   }}
                 />
+                {isEditMode && hoveredSubtaskId === s.id && (
+                  <button
+                    onClick={() => handleDeleteSubtask(s.id, s.text)}
+                    style={{
+                      width: "20px",
+                      height: "20px",
+                      borderRadius: "4px",
+                      border: "1px solid #FCA5A5",
+                      background: "#FEF2F2",
+                      color: "#DC2626",
+                      fontSize: "12px",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                      padding: 0,
+                    }}
+                    title="Delete subtask"
+                  >
+                    ×
+                  </button>
+                )}
               </div>
             );
           })}
+          <AddSubtaskButton onAdd={handleAddSubtask} color={rowColor} />
           <button
             onClick={(e) => { e.stopPropagation(); onNavigate(project.id); }}
             style={{ marginTop: "8px", fontSize: "11px", color: project.color, background: "none", border: `1px solid ${project.color}40`, borderRadius: "6px", padding: "4px 10px", cursor: "pointer", fontFamily: "'DM Mono', monospace", fontWeight: "700" }}
