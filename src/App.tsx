@@ -1,11 +1,11 @@
 import { useState, useMemo } from "react";
-import { ALL_PROJECTS } from './data/projects';
 import { getDaysUntil, parseDue } from './utils/dateUtils';
 import { getTaskStatus, STATUS_META } from './utils/statusUtils';
 import { getAllTasks } from './utils/taskUtils';
 import { quarterColors } from './utils/constants';
 import { useCheckboxState } from './contexts/CheckboxContext';
 import { useAuth } from './contexts/AuthContext';
+import { useRoadmap } from './contexts/RoadmapContext';
 import { AuthModal } from './components/AuthModal';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -179,8 +179,17 @@ function PillarSection({ pillar, checkedItems, onToggle }) {
 }
 
 function ProjectView({ project, checkedItems, onToggle }) {
-  const allInitiatives = project.pillars.flatMap(p => p.initiatives);
-  const totalSubtasks = allInitiatives.reduce((acc, i) => acc + i.tasks.reduce((a, t) => a + t.subtasks.length, 0), 0);
+  // Safety check for pillars
+  if (!project.pillars || project.pillars.length === 0) {
+    return (
+      <div style={{ padding: "40px", textAlign: "center", color: "#9CA3AF", fontFamily: "'Inter', sans-serif", fontSize: "13px" }}>
+        No workstreams (pillars) found for this project.
+      </div>
+    );
+  }
+
+  const allInitiatives = project.pillars.flatMap((p: any) => p.initiatives);
+  const totalSubtasks = allInitiatives.reduce((acc: any, i: any) => acc + i.tasks.reduce((a: any, t: any) => a + t.subtasks.length, 0), 0);
   return (
     <div>
       <div style={{ background: "#F0F0F8", borderRadius: "10px", padding: "12px 16px", marginBottom: "24px", display: "flex", gap: "16px", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between" }}>
@@ -281,13 +290,13 @@ function TaskTableRow({ project, pillar, initiative, task, status, done, total, 
   );
 }
 
-function OverviewSection({ checkedItems, onToggle, onNavigate }) {
+function OverviewSection({ checkedItems, onToggle, onNavigate, projects }: { checkedItems: any; onToggle: any; onNavigate: any; projects: any }) {
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterProject, setFilterProject] = useState("all");
   const [filterQuarter, setFilterQuarter] = useState("all");
   const [sortBy, setSortBy] = useState("due");
 
-  const allTasks = useMemo(() => getAllTasks(ALL_PROJECTS), []);
+  const allTasks = useMemo(() => getAllTasks(projects), [projects]);
 
   const rows = useMemo(() => {
     return allTasks.map(({ project, pillar, initiative, task }) => {
@@ -367,7 +376,7 @@ function OverviewSection({ checkedItems, onToggle, onNavigate }) {
           <div style={{ display: "flex", gap: "4px", alignItems: "center", flexWrap: "wrap" }}>
             <span style={{ fontSize: "10px", color: "#9CA3AF", fontFamily: "'DM Mono', monospace", marginRight: "4px" }}>PROJECT</span>
             <button onClick={() => setFilterProject("all")} style={{ padding: "5px 12px", borderRadius: "6px", border: `1px solid ${filterProject === "all" ? "#6C63FF" : "#E8E8F0"}`, background: filterProject === "all" ? "#6C63FF" : "#fff", color: filterProject === "all" ? "#fff" : "#6B7280", fontSize: "11px", fontWeight: filterProject === "all" ? "700" : "500", cursor: "pointer", fontFamily: "'DM Mono', monospace" }}>All</button>
-            {ALL_PROJECTS.map(p => <button key={p.id} onClick={() => setFilterProject(p.id)} style={{ padding: "5px 12px", borderRadius: "6px", border: `1px solid ${filterProject === p.id ? "#6C63FF" : "#E8E8F0"}`, background: filterProject === p.id ? "#6C63FF" : "#fff", color: filterProject === p.id ? "#fff" : "#6B7280", fontSize: "11px", fontWeight: filterProject === p.id ? "700" : "500", cursor: "pointer", fontFamily: "'DM Mono', monospace" }}>{p.id === "testing" ? "Testing" : p.id === "jenkins" ? "Jenkins" : p.id === "buildperf" ? "Build Perf" : "Knowledge"}</button>)}
+            {projects.map((p: any) => <button key={p.id} onClick={() => setFilterProject(p.id)} style={{ padding: "5px 12px", borderRadius: "6px", border: `1px solid ${filterProject === p.id ? "#6C63FF" : "#E8E8F0"}`, background: filterProject === p.id ? "#6C63FF" : "#fff", color: filterProject === p.id ? "#fff" : "#6B7280", fontSize: "11px", fontWeight: filterProject === p.id ? "700" : "500", cursor: "pointer", fontFamily: "'DM Mono', monospace" }}>{p.id === "testing" ? "Testing" : p.id === "jenkins" ? "Jenkins" : p.id === "buildperf" ? "Build Perf" : "Knowledge"}</button>)}
           </div>
           <div style={{ display: "flex", gap: "4px", alignItems: "center", flexWrap: "wrap" }}>
             <span style={{ fontSize: "10px", color: "#9CA3AF", fontFamily: "'DM Mono', monospace", marginRight: "4px" }}>QUARTER</span>
@@ -427,9 +436,13 @@ function OverviewSection({ checkedItems, onToggle, onNavigate }) {
 // ─────────────────────────────────────────────────────────────────────────────
 export default function App() {
   const [activeTab, setActiveTab] = useState("overview");
+
   // Global shared checkbox state with localStorage + Supabase sync
   const { checkedItems, toggleItem, clearAll, syncing, lastSyncTime, isSupabaseEnabled } = useCheckboxState();
   const { user, loading, signOut } = useAuth();
+
+  // Load roadmap data from Supabase
+  const { projects, loading: roadmapLoading, error: roadmapError } = useRoadmap();
 
   const handleClearProgress = () => {
     if (window.confirm('Are you sure you want to clear all progress? This will uncheck all completed subtasks and cannot be undone.')) {
@@ -445,7 +458,7 @@ export default function App() {
     { id: "knowledge", label: "🗺️ Knowledge & Stack",     color: "#8B5CF6" },
   ];
 
-  const currentProject = ALL_PROJECTS.find(p => p.id === activeTab);
+  const currentProject = projects.find((p: any) => p.id === activeTab);
 
   return (
     <div style={{ minHeight: "100vh", background: "#F7F7FC" }}>
@@ -470,7 +483,7 @@ export default function App() {
           {/* Header with Sign Out button */}
           <div style={{ textAlign: "center", marginBottom: "24px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
-              <div style={{ display: "inline-block", background: "#1A1A2E", color: "#00C2A8", padding: "4px 14px", borderRadius: "20px", fontSize: "10px", fontWeight: "700", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "'DM Mono', monospace" }}>Jenkins Engineering — 2025</div>
+              <div style={{ display: "inline-block", background: "#1A1A2E", color: "#00C2A8", padding: "4px 14px", borderRadius: "20px", fontSize: "10px", fontWeight: "700", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "'DM Mono', monospace" }}>Jenkins Engineering</div>
               <button
                 onClick={signOut}
                 style={{
@@ -500,7 +513,7 @@ export default function App() {
 
           <h1 style={{ fontFamily: "'Sora', sans-serif", fontWeight: "800", fontSize: "26px", color: "#1A1A2E", margin: "0 0 6px", lineHeight: "1.2" }}>Engineering Roadmap</h1>
           <p style={{ color: "#6B7280", fontSize: "13px", maxWidth: "480px", margin: "0 auto", lineHeight: "1.6", fontFamily: "'Inter', sans-serif" }}>
-            Four parallel projects across 2025. Use the Overview to track all tasks, or drill into each project below.
+            Four parallel projects across {new Date().getFullYear()}. Use the Overview to track all tasks, or drill into each project below.
           </p>
           {user.email && (
             <p style={{ color: "#9CA3AF", fontSize: "11px", margin: "8px 0 0", fontFamily: "'DM Mono', monospace" }}>
@@ -540,7 +553,7 @@ export default function App() {
 
         {/* Content */}
         {activeTab === "overview" && (
-          <OverviewSection checkedItems={checkedItems} onToggle={toggleItem} onNavigate={(projectId) => setActiveTab(projectId)} />
+          <OverviewSection checkedItems={checkedItems} onToggle={toggleItem} onNavigate={(projectId: any) => setActiveTab(projectId)} projects={projects} />
         )}
         {currentProject && (
           <ProjectView key={currentProject.id} project={currentProject} checkedItems={checkedItems} onToggle={toggleItem} />

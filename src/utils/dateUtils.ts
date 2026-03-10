@@ -1,8 +1,9 @@
-const CURRENT_DATE = new Date("2025-03-09");
+const CURRENT_DATE = new Date();
 
 export function parseDue(dueStr: string | undefined): Date | null {
   if (!dueStr) return null;
-  const withYear = dueStr.includes(",") ? dueStr : `${dueStr}, 2025`;
+  const currentYear = new Date().getFullYear();
+  const withYear = dueStr.includes(",") ? dueStr : `${dueStr}, ${currentYear}`;
   const d = new Date(withYear);
   return isNaN(d.getTime()) ? null : d;
 }

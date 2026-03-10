@@ -28,7 +28,7 @@ FIND:
       <div style={{ maxWidth: "960px", margin: "0 auto", padding: "28px 20px" }}>
         {/* Header */}
         <div style={{ textAlign: "center", marginBottom: "24px" }}>
-          <div style={{ display: "inline-block", background: "#1A1A2E", color: "#00C2A8", padding: "4px 14px", borderRadius: "20px", fontSize: "10px", fontWeight: "700", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "'DM Mono', monospace", marginBottom: "10px" }}>Jenkins Engineering — 2025</div>
+          <div style={{ display: "inline-block", background: "#1A1A2E", color: "#00C2A8", padding: "4px 14px", borderRadius: "20px", fontSize: "10px", fontWeight: "700", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "'DM Mono', monospace", marginBottom: "10px" }}>Jenkins Engineering — 2026</div>
 
 REPLACE WITH:
   return (
@@ -54,7 +54,7 @@ REPLACE WITH:
           {/* Header with Sign Out button */}
           <div style={{ textAlign: "center", marginBottom: "24px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
-              <div style={{ display: "inline-block", background: "#1A1A2E", color: "#00C2A8", padding: "4px 14px", borderRadius: "20px", fontSize: "10px", fontWeight: "700", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "'DM Mono', monospace" }}>Jenkins Engineering — 2025</div>
+              <div style={{ display: "inline-block", background: "#1A1A2E", color: "#00C2A8", padding: "4px 14px", borderRadius: "20px", fontSize: "10px", fontWeight: "700", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "'DM Mono', monospace" }}>Jenkins Engineering — 2026</div>
               <button
                 onClick={signOut}
                 style={{
@@ -86,12 +86,12 @@ REPLACE WITH:
 === STEP 4: Add user email display (After the <p> tag with "Four parallel projects", around line 457) ===
 
 FIND:
-            Four parallel projects across 2025. Use the Overview to track all tasks, or drill into each project below.
+            Four parallel projects across 2026. Use the Overview to track all tasks, or drill into each project below.
           </p>
         </div>
 
 REPLACE WITH:
-            Four parallel projects across 2025. Use the Overview to track all tasks, or drill into each project below.
+            Four parallel projects across 2026. Use the Overview to track all tasks, or drill into each project below.
           </p>
           {user.email && (
             <p style={{ color: "#9CA3AF", fontSize: "11px", margin: "8px 0 0", fontFamily: "'DM Mono', monospace" }}>
