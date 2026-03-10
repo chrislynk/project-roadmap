@@ -7,6 +7,9 @@ import { useCheckboxState } from './contexts/CheckboxContext';
 import { useAuth } from './contexts/AuthContext';
 import { useRoadmap } from './contexts/RoadmapContext';
 import { AuthModal } from './components/AuthModal';
+import { EditModeToggle } from './components/EditModeToggle';
+import { InlineTextEditor } from './components/InlineTextEditor';
+import { useRoadmapCRUD } from './hooks/useRoadmapCRUD';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SHARED UI ATOMS
@@ -35,11 +38,48 @@ function Checkbox({ checked, onChange, color }) {
 }
 
 function SubtaskRow({ subtask, checked, onToggle, color }) {
+  const { updateSubtask } = useRoadmapCRUD();
+
+  const handleSaveText = async (newText: string) => {
+    if (newText !== subtask.text) {
+      await updateSubtask(subtask.id, { text: newText });
+    }
+  };
+
+  const handleSaveDue = async (newDue: string) => {
+    if (newDue !== (subtask.due || '')) {
+      await updateSubtask(subtask.id, { due: newDue || undefined });
+    }
+  };
+
   return (
     <div style={{ display: "flex", gap: "8px", padding: "6px 0", alignItems: "flex-start", borderBottom: "1px solid #F3F4F6" }}>
       <Checkbox checked={checked} onChange={onToggle} color={color} />
-      <span style={{ flex: 1, fontSize: "12px", color: checked ? "#9CA3AF" : "#374151", lineHeight: "1.5", fontFamily: "'Inter', sans-serif", textDecoration: checked ? "line-through" : "none" }}>{subtask.text}</span>
-      {subtask.due && <span style={{ fontSize: "10px", color: "#9CA3AF", fontFamily: "'DM Mono', monospace", flexShrink: 0, marginTop: "2px" }}>{subtask.due}</span>}
+      <InlineTextEditor
+        value={subtask.text}
+        onSave={handleSaveText}
+        style={{
+          flex: 1,
+          fontSize: "12px",
+          color: checked ? "#9CA3AF" : "#374151",
+          lineHeight: "1.5",
+          fontFamily: "'Inter', sans-serif",
+          textDecoration: checked ? "line-through" : "none",
+        }}
+      />
+      <InlineTextEditor
+        value={subtask.due || ''}
+        onSave={handleSaveDue}
+        placeholder="Add due date"
+        style={{
+          fontSize: "10px",
+          color: "#9CA3AF",
+          fontFamily: "'DM Mono', monospace",
+          flexShrink: 0,
+          marginTop: "2px",
+          minWidth: "70px",
+        }}
+      />
     </div>
   );
 }
@@ -216,9 +256,22 @@ function ProjectView({ project, checkedItems, onToggle }) {
 // ─────────────────────────────────────────────────────────────────────────────
 function TaskTableRow({ project, pillar, initiative, task, status, done, total, idx, checkedItems, onToggle, onNavigate }) {
   const [expanded, setExpanded] = useState(false);
+  const { updateSubtask } = useRoadmapCRUD();
   const isLearning = task.type === "learning";
   const rowColor = isLearning ? "#F59E0B" : pillar.color;
   const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+
+  const handleSaveSubtaskText = async (subtaskId: string, newText: string, currentText: string) => {
+    if (newText !== currentText) {
+      await updateSubtask(subtaskId, { text: newText });
+    }
+  };
+
+  const handleSaveSubtaskDue = async (subtaskId: string, newDue: string, currentDue: string | undefined) => {
+    if (newDue !== (currentDue || '')) {
+      await updateSubtask(subtaskId, { due: newDue || undefined });
+    }
+  };
 
   return (
     <div key={task.id}>
@@ -268,8 +321,31 @@ function TaskTableRow({ project, pillar, initiative, task, status, done, total, 
             return (
               <div key={s.id} style={{ display: "flex", gap: "8px", padding: "5px 0", alignItems: "flex-start", borderBottom: "1px solid #EEEEF8" }}>
                 <Checkbox checked={checked} onChange={() => onToggle(s.id)} color={rowColor} />
-                <span style={{ flex: 1, fontSize: "12px", color: checked ? "#9CA3AF" : "#374151", fontFamily: "'Inter', sans-serif", textDecoration: checked ? "line-through" : "none", lineHeight: "1.5" }}>{s.text}</span>
-                {s.due && <span style={{ fontSize: "10px", color: "#9CA3AF", fontFamily: "'DM Mono', monospace", flexShrink: 0, marginTop: "2px" }}>{s.due}</span>}
+                <InlineTextEditor
+                  value={s.text}
+                  onSave={(newText) => handleSaveSubtaskText(s.id, newText, s.text)}
+                  style={{
+                    flex: 1,
+                    fontSize: "12px",
+                    color: checked ? "#9CA3AF" : "#374151",
+                    fontFamily: "'Inter', sans-serif",
+                    textDecoration: checked ? "line-through" : "none",
+                    lineHeight: "1.5",
+                  }}
+                />
+                <InlineTextEditor
+                  value={s.due || ''}
+                  onSave={(newDue) => handleSaveSubtaskDue(s.id, newDue, s.due)}
+                  placeholder="Add due date"
+                  style={{
+                    fontSize: "10px",
+                    color: "#9CA3AF",
+                    fontFamily: "'DM Mono', monospace",
+                    flexShrink: 0,
+                    marginTop: "2px",
+                    minWidth: "70px",
+                  }}
+                />
               </div>
             );
           })}
@@ -484,31 +560,34 @@ export default function App() {
           <div style={{ textAlign: "center", marginBottom: "24px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
               <div style={{ display: "inline-block", background: "#1A1A2E", color: "#00C2A8", padding: "4px 14px", borderRadius: "20px", fontSize: "10px", fontWeight: "700", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "'DM Mono', monospace" }}>Jenkins Engineering</div>
-              <button
-                onClick={signOut}
-                style={{
-                  padding: "6px 12px",
-                  borderRadius: "6px",
-                  border: "1px solid #E8E8F0",
-                  background: "#fff",
-                  color: "#6B7280",
-                  fontSize: "11px",
-                  fontWeight: "700",
-                  cursor: "pointer",
-                  fontFamily: "'DM Mono', monospace",
-                  transition: "all 0.2s",
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.background = "#F9FAFB";
-                  e.currentTarget.style.borderColor = "#D1D5DB";
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.background = "#fff";
-                  e.currentTarget.style.borderColor = "#E8E8F0";
-                }}
-              >
-                👋 Sign Out
-              </button>
+              <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                <EditModeToggle />
+                <button
+                  onClick={signOut}
+                  style={{
+                    padding: "6px 12px",
+                    borderRadius: "6px",
+                    border: "1px solid #E8E8F0",
+                    background: "#fff",
+                    color: "#6B7280",
+                    fontSize: "11px",
+                    fontWeight: "700",
+                    cursor: "pointer",
+                    fontFamily: "'DM Mono', monospace",
+                    transition: "all 0.2s",
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.background = "#F9FAFB";
+                    e.currentTarget.style.borderColor = "#D1D5DB";
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.background = "#fff";
+                    e.currentTarget.style.borderColor = "#E8E8F0";
+                  }}
+                >
+                  👋 Sign Out
+                </button>
+              </div>
             </div>
 
           <h1 style={{ fontFamily: "'Sora', sans-serif", fontWeight: "800", fontSize: "26px", color: "#1A1A2E", margin: "0 0 6px", lineHeight: "1.2" }}>Engineering Roadmap</h1>

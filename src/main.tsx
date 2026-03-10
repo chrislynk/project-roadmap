@@ -5,14 +5,17 @@ import App from './App.tsx'
 import { AuthProvider } from './contexts/AuthContext.tsx'
 import { CheckboxProvider } from './contexts/CheckboxContext.tsx'
 import { RoadmapProvider } from './contexts/RoadmapContext.tsx'
+import { EditProvider } from './contexts/EditContext.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AuthProvider>
       <RoadmapProvider>
-        <CheckboxProvider>
-          <App />
-        </CheckboxProvider>
+        <EditProvider>
+          <CheckboxProvider>
+            <App />
+          </CheckboxProvider>
+        </EditProvider>
       </RoadmapProvider>
     </AuthProvider>
   </StrictMode>,
