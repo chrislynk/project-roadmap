@@ -5,6 +5,8 @@ import { getTaskStatus, STATUS_META } from './utils/statusUtils';
 import { getAllTasks } from './utils/taskUtils';
 import { quarterColors } from './utils/constants';
 import { useCheckboxState } from './contexts/CheckboxContext';
+import { useAuth } from './contexts/AuthContext';
+import { AuthModal } from './components/AuthModal';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SHARED UI ATOMS
@@ -425,8 +427,9 @@ function OverviewSection({ checkedItems, onToggle, onNavigate }) {
 // ─────────────────────────────────────────────────────────────────────────────
 export default function App() {
   const [activeTab, setActiveTab] = useState("overview");
-  // Global shared checkbox state with localStorage persistence
-  const { checkedItems, toggleItem, clearAll } = useCheckboxState();
+  // Global shared checkbox state with localStorage + Supabase sync
+  const { checkedItems, toggleItem, clearAll, syncing, lastSyncTime, isSupabaseEnabled } = useCheckboxState();
+  const { user, loading, signOut } = useAuth();
 
   const handleClearProgress = () => {
     if (window.confirm('Are you sure you want to clear all progress? This will uncheck all completed subtasks and cannot be undone.')) {
@@ -448,14 +451,62 @@ export default function App() {
     <div style={{ minHeight: "100vh", background: "#F7F7FC" }}>
       <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;700;800&family=DM+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
-      <div style={{ maxWidth: "960px", margin: "0 auto", padding: "28px 20px" }}>
-        {/* Header */}
-        <div style={{ textAlign: "center", marginBottom: "24px" }}>
-          <div style={{ display: "inline-block", background: "#1A1A2E", color: "#00C2A8", padding: "4px 14px", borderRadius: "20px", fontSize: "10px", fontWeight: "700", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "'DM Mono', monospace", marginBottom: "10px" }}>Jenkins Engineering — 2025</div>
+      {/* Show loading state */}
+      {loading && (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh" }}>
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontSize: "48px", marginBottom: "16px" }}>⏳</div>
+            <div style={{ fontFamily: "'Sora', sans-serif", fontSize: "18px", color: "#6B7280" }}>Loading...</div>
+          </div>
+        </div>
+      )}
+
+      {/* Show auth modal if not logged in */}
+      {!loading && !user && <AuthModal />}
+
+      {/* Show app if logged in */}
+      {!loading && user && (
+        <div style={{ maxWidth: "960px", margin: "0 auto", padding: "28px 20px" }}>
+          {/* Header with Sign Out button */}
+          <div style={{ textAlign: "center", marginBottom: "24px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+              <div style={{ display: "inline-block", background: "#1A1A2E", color: "#00C2A8", padding: "4px 14px", borderRadius: "20px", fontSize: "10px", fontWeight: "700", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "'DM Mono', monospace" }}>Jenkins Engineering — 2025</div>
+              <button
+                onClick={signOut}
+                style={{
+                  padding: "6px 12px",
+                  borderRadius: "6px",
+                  border: "1px solid #E8E8F0",
+                  background: "#fff",
+                  color: "#6B7280",
+                  fontSize: "11px",
+                  fontWeight: "700",
+                  cursor: "pointer",
+                  fontFamily: "'DM Mono', monospace",
+                  transition: "all 0.2s",
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.background = "#F9FAFB";
+                  e.currentTarget.style.borderColor = "#D1D5DB";
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.background = "#fff";
+                  e.currentTarget.style.borderColor = "#E8E8F0";
+                }}
+              >
+                👋 Sign Out
+              </button>
+            </div>
+
           <h1 style={{ fontFamily: "'Sora', sans-serif", fontWeight: "800", fontSize: "26px", color: "#1A1A2E", margin: "0 0 6px", lineHeight: "1.2" }}>Engineering Roadmap</h1>
           <p style={{ color: "#6B7280", fontSize: "13px", maxWidth: "480px", margin: "0 auto", lineHeight: "1.6", fontFamily: "'Inter', sans-serif" }}>
             Four parallel projects across 2025. Use the Overview to track all tasks, or drill into each project below.
           </p>
+          {user.email && (
+            <p style={{ color: "#9CA3AF", fontSize: "11px", margin: "8px 0 0", fontFamily: "'DM Mono', monospace" }}>
+              Signed in as: {user.email}
+            </p>
+          )}
         </div>
 
         {/* Tab nav */}
@@ -496,8 +547,21 @@ export default function App() {
         )}
 
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", padding: "14px 18px", background: "#fff", borderRadius: "10px", border: "1px solid #E8E8F0", marginTop: "16px", flexWrap: "wrap" }}>
-          <div style={{ fontSize: "11px", color: "#9CA3AF", fontFamily: "'DM Mono', monospace", flex: 1, minWidth: "200px" }}>
-            Progress is saved automatically — checkboxes persist across page refreshes and sync across all tabs
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", flex: 1, minWidth: "200px", flexWrap: "wrap" }}>
+            <div style={{ fontSize: "11px", color: "#9CA3AF", fontFamily: "'DM Mono', monospace" }}>
+              Progress is saved automatically — checkboxes persist across page refreshes and sync across all tabs
+            </div>
+            {isSupabaseEnabled && (
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "10px", color: syncing ? "#F59E0B" : "#10B981", fontFamily: "'DM Mono', monospace", padding: "4px 8px", background: syncing ? "#FFFBEB" : "#F0FDF4", border: `1px solid ${syncing ? "#FDE68A" : "#BBF7D0"}`, borderRadius: "6px" }}>
+                <span>{syncing ? "⏳" : "☁️"}</span>
+                <span>{syncing ? "Syncing..." : "Cloud Synced"}</span>
+                {lastSyncTime && !syncing && (
+                  <span style={{ color: "#9CA3AF" }}>
+                    • {new Date(lastSyncTime).toLocaleTimeString()}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
           <button
             onClick={handleClearProgress}
@@ -526,6 +590,7 @@ export default function App() {
           </button>
         </div>
       </div>
+      )}
     </div>
   );
 }
