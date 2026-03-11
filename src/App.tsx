@@ -267,7 +267,16 @@ function TaskBlock({ task, pillarColor, checkedItems, onToggle }) {
       )}
       {expanded && (
         <div style={{ padding: "0 14px 10px", borderTop: "1px solid #F0F0F0" }}>
-          {task.subtasks.map(s => <SubtaskRow key={s.id} subtask={s} checked={!!checkedItems[s.id]} onToggle={() => onToggle(s.id)} color={taskColor} />)}
+          {[...task.subtasks]
+            .sort((a, b) => {
+              const dateA = parseDue(a.due);
+              const dateB = parseDue(b.due);
+              if (!dateA && !dateB) return 0;
+              if (!dateA) return 1;
+              if (!dateB) return -1;
+              return dateA.getTime() - dateB.getTime();
+            })
+            .map(s => <SubtaskRow key={s.id} subtask={s} checked={!!checkedItems[s.id]} onToggle={() => onToggle(s.id)} color={taskColor} />)}
           <AddSubtaskButton onAdd={handleAddSubtask} color={taskColor} />
         </div>
       )}
@@ -419,7 +428,16 @@ function InitiativeCard({ initiative, pillarColor, checkedItems, onToggle }) {
             {activeTab === "tasks" && (
               <div>
                 <div style={{ fontSize: "11px", color: "#9CA3AF", marginBottom: "10px", fontFamily: "'Inter', sans-serif" }}>📚 <strong style={{ color: "#92400E" }}>Learn First</strong> tasks should be completed before starting implementation tasks.</div>
-                {initiative.tasks.map(task => <TaskBlock key={task.id} task={task} pillarColor={pillarColor} checkedItems={checkedItems} onToggle={onToggle} />)}
+                {[...initiative.tasks]
+                  .sort((a, b) => {
+                    const dateA = parseDue(a.due);
+                    const dateB = parseDue(b.due);
+                    if (!dateA && !dateB) return 0;
+                    if (!dateA) return 1;
+                    if (!dateB) return -1;
+                    return dateA.getTime() - dateB.getTime();
+                  })
+                  .map(task => <TaskBlock key={task.id} task={task} pillarColor={pillarColor} checkedItems={checkedItems} onToggle={onToggle} />)}
                 <AddTaskButton onAdd={handleAddTask} color={pillarColor} />
               </div>
             )}
@@ -479,7 +497,16 @@ function PillarSection({ pillar, checkedItems, onToggle }) {
         <div style={{ display: "flex", gap: "4px" }}>{allQuarters.map(q => <QuarterBadge key={q} q={q} />)}</div>
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-        {pillar.initiatives.map(i => <InitiativeCard key={i.id} initiative={i} pillarColor={pillar.color} checkedItems={checkedItems} onToggle={onToggle} />)}
+        {[...pillar.initiatives]
+          .sort((a, b) => {
+            const dateA = parseDue(a.dueDate);
+            const dateB = parseDue(b.dueDate);
+            if (!dateA && !dateB) return 0;
+            if (!dateA) return 1;
+            if (!dateB) return -1;
+            return dateA.getTime() - dateB.getTime();
+          })
+          .map(i => <InitiativeCard key={i.id} initiative={i} pillarColor={pillar.color} checkedItems={checkedItems} onToggle={onToggle} />)}
         <AddInitiativeButton onAdd={handleAddInitiative} color={pillar.color} />
       </div>
     </div>
