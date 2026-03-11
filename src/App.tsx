@@ -13,6 +13,7 @@ import { InlineTextEditor } from './components/InlineTextEditor';
 import { AddSubtaskButton } from './components/AddSubtaskButton';
 import { AddTaskButton } from './components/AddTaskButton';
 import { AddInitiativeButton } from './components/AddInitiativeButton';
+import { SubtaskCalendar } from './components/SubtaskCalendar';
 import { useRoadmapCRUD } from './hooks/useRoadmapCRUD';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -860,6 +861,7 @@ export default function App() {
 
       {/* Show app if logged in */}
       {!loading && user && (
+        <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
         <div style={{ maxWidth: "960px", margin: "0 auto", padding: "28px 20px" }}>
           {/* Header with Sign Out button */}
           <div style={{ textAlign: "center", marginBottom: "24px" }}>
@@ -905,8 +907,15 @@ export default function App() {
             </p>
           )}
         </div>
+        </div>
+
+        {/* Subtask Calendar */}
+        <div style={{ maxWidth: "960px", margin: "0 auto", padding: "0 20px" }}>
+          <SubtaskCalendar projects={projects} selectedProjectId={activeTab} />
+        </div>
 
         {/* Tab nav */}
+        <div style={{ maxWidth: "960px", margin: "0 auto", padding: "0 20px" }}>
         <div style={{ display: "flex", gap: "6px", marginBottom: "24px", background: "#EEEEF5", borderRadius: "12px", padding: "5px" }}>
           {tabs.map(tab => {
             const isActive = activeTab === tab.id;
@@ -986,7 +995,8 @@ export default function App() {
             🗑️ Clear All Progress
           </button>
         </div>
-      </div>
+        </div>
+        </div>
       )}
     </div>
   );
