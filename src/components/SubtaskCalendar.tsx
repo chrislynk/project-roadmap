@@ -57,79 +57,24 @@ export function SubtaskCalendar({ projects, selectedProjectId }: SubtaskCalendar
   const dayLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
   return (
-    <div
-      style={{
-        background: '#F9FAFB',
-        borderRadius: '16px',
-        padding: '16px 2px',
-        marginBottom: '24px',
-        border: '1px solid #E8E8F0',
-      }}
-    >
+    <div className="calendar-container">
       {/* Navigation Controls */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: '12px',
-          marginTop: '-12px',
-          padding: '0px 12px'
-        }}
-      >
+      <div className="calendar-nav">
         <button
           onClick={handlePrevMonth}
-          style={{
-            background: '#fff',
-            border: '1px solid #E8E8F0',
-            borderRadius: '8px',
-            padding: '6px 12px',
-            cursor: 'pointer',
-            fontSize: '16px',
-            fontFamily: "'DM Mono', monospace",
-            transition: 'all 0.2s',
-          }}
-          onMouseOver={(e) => {
-            e.currentTarget.style.background = '#F3F4F6';
-          }}
-          onMouseOut={(e) => {
-            e.currentTarget.style.background = '#fff';
-          }}
+          className="btn-calendar-nav"
         >
           ←
         </button>
         <button
           onClick={handleNextMonth}
-          style={{
-            background: '#fff',
-            border: '1px solid #E8E8F0',
-            borderRadius: '8px',
-            padding: '6px 12px',
-            cursor: 'pointer',
-            fontSize: '16px',
-            fontFamily: "'DM Mono', monospace",
-            transition: 'all 0.2s',
-          }}
-          onMouseOver={(e) => {
-            e.currentTarget.style.background = '#F3F4F6';
-          }}
-          onMouseOut={(e) => {
-            e.currentTarget.style.background = '#fff';
-          }}
+          className="btn-calendar-nav"
         >
           →
         </button>
       </div>
       {/* Months Grid */}
-      <div
-        style={{
-          display: 'flex',
-          gap: '2px',
-          overflowX: 'visible',
-          paddingBottom: '0px',
-          justifyContent: 'center',
-        }}
-      >
+      <div className="calendar-months">
         {months.map((monthDate, monthIndex) => {
           const year = monthDate.getFullYear();
           const month = monthDate.getMonth();
@@ -140,55 +85,23 @@ export function SubtaskCalendar({ projects, selectedProjectId }: SubtaskCalendar
           const monthName = monthDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
 
           return (
-            <div key={monthIndex} style={{ minWidth: '310px' }}>
+            <div key={monthIndex} className="calendar-month">
               {/* Month Header */}
-              <div
-                style={{
-                  fontSize: '12px',
-                  fontWeight: '700',
-                  fontFamily: "'DM Mono', monospace",
-                  color: '#6B7280',
-                  marginBottom: '8px',
-                  textAlign: 'center',
-                  textTransform: 'uppercase',
-                }}
-              >
+              <div className="calendar-month-header">
                 {monthName}
               </div>
 
               {/* Day Labels */}
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(7, 1fr)',
-                  gap: '2px',
-                  marginBottom: '4px',
-                }}
-              >
+              <div className="calendar-day-labels">
                 {dayLabels.map((label, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      fontSize: '10px',
-                      fontFamily: "'DM Mono', monospace",
-                      color: '#9CA3AF',
-                      textAlign: 'center',
-                      fontWeight: '600',
-                    }}
-                  >
+                  <div key={i} className="calendar-day-label">
                     {label}
                   </div>
                 ))}
               </div>
 
               {/* Calendar Grid */}
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(7, 1fr)',
-                  gap: '2px',
-                }}
-              >
+              <div className="calendar-grid">
                 {/* Empty cells for days before month start */}
                 {Array.from({ length: startOffset }).map((_, i) => (
                   <div key={`empty-${i}`} style={{ width: '42px', height: '42px' }} />
@@ -209,65 +122,23 @@ export function SubtaskCalendar({ projects, selectedProjectId }: SubtaskCalendar
                   return (
                     <div
                       key={dayIndex}
-                      style={{
-                        width: '42px',
-                        height: '42px',
-                        position: 'relative',
-                        background: isToday ? '#EEF2FF' : 'transparent',
-                        borderRadius: '4px',
-                      }}
+                      className={`calendar-day ${isToday ? 'calendar-day-today' : ''}`}
                     >
                       {/* Day number */}
-                      <div
-                        style={{
-                          position: 'absolute',
-                          top: '2px',
-                          left: '50%',
-                          transform: 'translateX(-50%)',
-                          fontSize: '12px',
-                          fontFamily: "'DM Mono', monospace",
-                          color: isToday ? '#4F46E5' : '#6B7280',
-                          fontWeight: isToday ? '700' : '400',
-                        }}
-                      >
+                      <div className={`calendar-day-number ${isToday ? 'calendar-day-number-today' : ''}`}>
                         {day}
                       </div>
 
                       {/* Subtask indicators */}
                       {subtasksForDate.length > 0 && (
-                        <div
-                          style={{
-                            position: 'relative',
-                            bottom: '4px',
-                            left: '50%',
-                            transform: 'translateX(-50%)',
-                            display: 'flex',
-                            gap: '3px',
-                            flexWrap: 'wrap',
-                            justifyContent: 'center',
-                            maxWidth: '38px',
-                          }}
-                        >
+                        <div className="calendar-subtask-indicators">
                           {subtasksForDate.map((info, i) => (
                             <div
                               key={i}
                               onMouseEnter={(e) => handleMouseEnter(dateKey + '__' + i, e)}
                               onMouseLeave={handleMouseLeave}
-                              style={{
-                                width: '12px',
-                                height: '12px',
-                                background: info.color,
-                                borderRadius: '6px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                cursor: 'pointer',
-                                fontSize: '7px',
-                                fontWeight: '700',
-                                color: '#fff',
-                                fontFamily: "'DM Mono', monospace",
-                                position: 'relative',
-                              }}
+                              className="calendar-subtask-dot"
+                              style={{ background: info.color }}
                             >
                               {info.count > 1 ? info.count : ''}
                             </div>
@@ -286,18 +157,10 @@ export function SubtaskCalendar({ projects, selectedProjectId }: SubtaskCalendar
       {/* Tooltip */}
       {hoveredDateKey && tooltipPosition && (
         <div
+          className="tooltip"
           style={{
-            position: 'fixed',
             left: `${tooltipPosition.x + 10}px`,
             top: `${tooltipPosition.y + 10}px`,
-            background: '#fff',
-            border: '1px solid #E8E8F0',
-            borderRadius: '8px',
-            padding: '12px',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-            maxWidth: '300px',
-            zIndex: 1000,
-            pointerEvents: 'none',
           }}
         >
           {(() => {
@@ -313,40 +176,15 @@ export function SubtaskCalendar({ projects, selectedProjectId }: SubtaskCalendar
                 {info.subtasks.map((subtask, i) => (
                   <div
                     key={i}
-                    style={{
-                      marginBottom: i < info.subtasks.length - 1 ? '8px' : '0',
-                      paddingBottom: i < info.subtasks.length - 1 ? '8px' : '0',
-                      borderBottom: i < info.subtasks.length - 1 ? '1px solid #E8E8F0' : 'none',
-                    }}
+                    className={`tooltip-item ${i < info.subtasks.length - 1 ? 'tooltip-item-border' : ''}`}
                   >
-                    <div
-                      style={{
-                        fontSize: '11px',
-                        fontWeight: '700',
-                        fontFamily: "'Sora', sans-serif",
-                        color: '#1F2937',
-                        marginBottom: '2px',
-                      }}
-                    >
+                    <div className="tooltip-title">
                       {subtask.initiativeTitle}
                     </div>
-                    <div
-                      style={{
-                        fontSize: '10px',
-                        fontFamily: "'Inter', sans-serif",
-                        color: '#6B7280',
-                        marginBottom: '2px',
-                      }}
-                    >
+                    <div className="tooltip-task">
                       {subtask.taskTitle}
                     </div>
-                    <div
-                      style={{
-                        fontSize: '10px',
-                        fontFamily: "'Inter', sans-serif",
-                        color: '#374151',
-                      }}
-                    >
+                    <div className="tooltip-subtask">
                       • {subtask.text}
                     </div>
                   </div>

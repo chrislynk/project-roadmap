@@ -45,23 +45,10 @@ export function AddTaskButton({ onAdd, color }: AddTaskButtonProps) {
     return (
       <button
         onClick={() => setIsAdding(true)}
+        className="btn btn-add"
         style={{
-          width: '100%',
-          padding: '10px',
-          marginTop: '8px',
           border: `1px dashed ${color}40`,
-          borderRadius: '8px',
-          background: 'transparent',
           color: color,
-          fontSize: '13px',
-          fontWeight: '600',
-          cursor: 'pointer',
-          fontFamily: "'Inter', sans-serif",
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '6px',
-          transition: 'all 0.2s',
         }}
         onMouseOver={(e) => {
           e.currentTarget.style.background = `${color}10`;
@@ -80,13 +67,8 @@ export function AddTaskButton({ onAdd, color }: AddTaskButtonProps) {
 
   return (
     <div
-      style={{
-        marginTop: '8px',
-        padding: '12px',
-        border: `2px solid ${color}`,
-        borderRadius: '8px',
-        background: '#fff',
-      }}
+      className="form-container add-form-border"
+      style={{ border: `2px solid ${color}` }}
     >
       <input
         type="text"
@@ -99,36 +81,26 @@ export function AddTaskButton({ onAdd, color }: AddTaskButtonProps) {
           if (e.key === 'Escape') handleCancel();
         }}
         disabled={isSaving}
-        style={{
-          width: '100%',
-          padding: '8px 10px',
-          border: '1px solid #E8E8F0',
-          borderRadius: '6px',
-          fontSize: '13px',
-          fontFamily: "'Inter', sans-serif",
-          fontWeight: '600',
-          marginBottom: '8px',
-          outline: 'none',
-        }}
+        className="input"
+        style={{ fontFamily: "'Inter', sans-serif", fontWeight: '600', marginBottom: '8px' }}
       />
       <div style={{ display: 'flex', gap: '8px', marginBottom: '8px', alignItems: 'center' }}>
         <div style={{ flex: 1 }}>
-          <label style={{ fontSize: '10px', color: '#9CA3AF', fontFamily: "'DM Mono', monospace", display: 'block', marginBottom: '4px' }}>
+          <label className="label">
             TYPE
           </label>
           <div style={{ display: 'flex', gap: '6px' }}>
             <button
               onClick={() => setType('implementation')}
+              className="btn"
               style={{
                 flex: 1,
                 padding: '6px 10px',
                 border: `1px solid ${type === 'implementation' ? color : '#E8E8F0'}`,
-                borderRadius: '6px',
                 background: type === 'implementation' ? `${color}15` : '#fff',
                 color: type === 'implementation' ? color : '#6B7280',
                 fontSize: '11px',
                 fontWeight: '700',
-                cursor: 'pointer',
                 fontFamily: "'DM Mono', monospace",
               }}
             >
@@ -136,16 +108,15 @@ export function AddTaskButton({ onAdd, color }: AddTaskButtonProps) {
             </button>
             <button
               onClick={() => setType('learning')}
+              className="btn"
               style={{
                 flex: 1,
                 padding: '6px 10px',
                 border: `1px solid ${type === 'learning' ? '#F59E0B' : '#E8E8F0'}`,
-                borderRadius: '6px',
                 background: type === 'learning' ? '#FDE68A20' : '#fff',
                 color: type === 'learning' ? '#F59E0B' : '#6B7280',
                 fontSize: '11px',
                 fontWeight: '700',
-                cursor: 'pointer',
                 fontFamily: "'DM Mono', monospace",
               }}
             >
@@ -154,7 +125,7 @@ export function AddTaskButton({ onAdd, color }: AddTaskButtonProps) {
           </div>
         </div>
         <div style={{ flex: 1 }}>
-          <label style={{ fontSize: '10px', color: '#9CA3AF', fontFamily: "'DM Mono', monospace", display: 'block', marginBottom: '4px' }}>
+          <label className="label">
             DUE DATE
           </label>
           <input
@@ -167,15 +138,8 @@ export function AddTaskButton({ onAdd, color }: AddTaskButtonProps) {
               if (e.key === 'Escape') handleCancel();
             }}
             disabled={isSaving}
-            style={{
-              width: '100%',
-              padding: '6px 8px',
-              border: '1px solid #E8E8F0',
-              borderRadius: '6px',
-              fontSize: '11px',
-              fontFamily: "'DM Mono', monospace",
-              outline: 'none',
-            }}
+            className="input input-medium"
+            style={{ fontFamily: "'DM Mono', monospace", width: '100%' }}
           />
         </div>
       </div>
@@ -183,40 +147,21 @@ export function AddTaskButton({ onAdd, color }: AddTaskButtonProps) {
         <button
           onClick={handleCancel}
           disabled={isSaving}
-          style={{
-            padding: '6px 14px',
-            borderRadius: '6px',
-            border: '1px solid #E8E8F0',
-            background: '#fff',
-            color: '#6B7280',
-            fontSize: '11px',
-            fontWeight: '700',
-            cursor: isSaving ? 'not-allowed' : 'pointer',
-            fontFamily: "'DM Mono', monospace",
-          }}
+          className="btn-secondary"
+          style={{ padding: '6px 14px', fontSize: '11px' }}
         >
           Cancel
         </button>
         <button
           onClick={handleSave}
           disabled={isSaving || !title.trim()}
-          style={{
-            padding: '6px 14px',
-            borderRadius: '6px',
-            border: 'none',
-            background: color,
-            color: '#fff',
-            fontSize: '11px',
-            fontWeight: '700',
-            cursor: isSaving || !title.trim() ? 'not-allowed' : 'pointer',
-            fontFamily: "'DM Mono', monospace",
-            opacity: isSaving || !title.trim() ? 0.5 : 1,
-          }}
+          className="btn-primary"
+          style={{ background: color, padding: '6px 14px', fontSize: '11px' }}
         >
           {isSaving ? 'Adding...' : 'Add Task'}
         </button>
       </div>
-      <div style={{ fontSize: '10px', color: '#9CA3AF', marginTop: '6px', fontFamily: "'DM Mono', monospace" }}>
+      <div className="hint-text" style={{ marginTop: '6px' }}>
         Press Enter to add, Esc to cancel
       </div>
     </div>

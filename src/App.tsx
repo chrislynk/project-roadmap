@@ -21,13 +21,13 @@ import { useRoadmapCRUD } from './hooks/useRoadmapCRUD';
 // ─────────────────────────────────────────────────────────────────────────────
 function QuarterBadge({ q }) {
   const c = quarterColors[q];
-  return <span style={{ background: c.bg, color: c.text, border: `1px solid ${c.border}`, borderRadius: "4px", padding: "2px 7px", fontSize: "10px", fontWeight: "700", letterSpacing: "0.05em", fontFamily: "'DM Mono', monospace" }}>{q}</span>;
+  return <span className="quarter-badge" style={{ background: c.bg, color: c.text, border: `1px solid ${c.border}` }}>{q}</span>;
 }
 
 function StatusBadge({ status }) {
   const m = STATUS_META[status];
   return (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", background: m.bg, color: m.text, border: `1px solid ${m.border}`, borderRadius: "20px", padding: "3px 10px", fontSize: "11px", fontWeight: "700", fontFamily: "'DM Mono', monospace", whiteSpace: "nowrap" }}>
+    <span className="status-badge" style={{ display: "inline-flex", alignItems: "center", gap: "5px", background: m.bg, color: m.text, border: `1px solid ${m.border}`, borderRadius: "20px", padding: "3px 10px", whiteSpace: "nowrap" }}>
       <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: m.dot, flexShrink: 0 }} />
       {m.label}
     </span>
@@ -36,7 +36,23 @@ function StatusBadge({ status }) {
 
 function Checkbox({ checked, onChange, color }) {
   return (
-    <button onClick={onChange} style={{ width: "16px", height: "16px", borderRadius: "4px", flexShrink: 0, border: checked ? `2px solid ${color}` : "2px solid #D1D5DB", background: checked ? color : "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, marginTop: "2px" }}>
+    <button
+      onClick={onChange}
+      style={{
+        width: "16px",
+        height: "16px",
+        borderRadius: "4px",
+        flexShrink: 0,
+        border: checked ? `2px solid ${color}` : "2px solid #D1D5DB",
+        background: checked ? color : "transparent",
+        cursor: "pointer",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 0,
+        marginTop: "2px"
+      }}
+    >
       {checked && <span style={{ color: "#fff", fontSize: "10px", lineHeight: 1 }}>✓</span>}
     </button>
   );

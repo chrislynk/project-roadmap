@@ -42,23 +42,10 @@ export function AddSubtaskButton({ onAdd, color }: AddSubtaskButtonProps) {
     return (
       <button
         onClick={() => setIsAdding(true)}
+        className="btn btn-add-subtask"
         style={{
-          width: '100%',
-          padding: '8px',
-          marginTop: '4px',
           border: `1px dashed ${color}40`,
-          borderRadius: '6px',
-          background: 'transparent',
           color: color,
-          fontSize: '12px',
-          fontWeight: '600',
-          cursor: 'pointer',
-          fontFamily: "'Inter', sans-serif",
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '4px',
-          transition: 'all 0.2s',
         }}
         onMouseOver={(e) => {
           e.currentTarget.style.background = `${color}10`;
@@ -77,13 +64,8 @@ export function AddSubtaskButton({ onAdd, color }: AddSubtaskButtonProps) {
 
   return (
     <div
-      style={{
-        marginTop: '4px',
-        padding: '8px',
-        border: `2px solid ${color}`,
-        borderRadius: '6px',
-        background: '#fff',
-      }}
+      className="form-container add-form-border"
+      style={{ border: `2px solid ${color}` }}
     >
       <input
         type="text"
@@ -96,16 +78,8 @@ export function AddSubtaskButton({ onAdd, color }: AddSubtaskButtonProps) {
           if (e.key === 'Escape') handleCancel();
         }}
         disabled={isSaving}
-        style={{
-          width: '100%',
-          padding: '6px 8px',
-          border: '1px solid #E8E8F0',
-          borderRadius: '4px',
-          fontSize: '12px',
-          fontFamily: "'Inter', sans-serif",
-          marginBottom: '6px',
-          outline: 'none',
-        }}
+        className="input input-small"
+        style={{ fontFamily: "'Inter', sans-serif", marginBottom: '6px' }}
       />
       <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
         <input
@@ -118,53 +92,27 @@ export function AddSubtaskButton({ onAdd, color }: AddSubtaskButtonProps) {
             if (e.key === 'Escape') handleCancel();
           }}
           disabled={isSaving}
-          style={{
-            flex: 1,
-            padding: '4px 6px',
-            border: '1px solid #E8E8F0',
-            borderRadius: '4px',
-            fontSize: '10px',
-            fontFamily: "'DM Mono', monospace",
-            outline: 'none',
-          }}
+          className="input input-small"
+          style={{ flex: 1, fontFamily: "'DM Mono', monospace" }}
         />
         <button
           onClick={handleSave}
           disabled={isSaving || !text.trim()}
-          style={{
-            padding: '4px 12px',
-            borderRadius: '4px',
-            border: 'none',
-            background: color,
-            color: '#fff',
-            fontSize: '11px',
-            fontWeight: '700',
-            cursor: isSaving || !text.trim() ? 'not-allowed' : 'pointer',
-            fontFamily: "'DM Mono', monospace",
-            opacity: isSaving || !text.trim() ? 0.5 : 1,
-          }}
+          className="btn-primary"
+          style={{ background: color, padding: '4px 12px', fontSize: '11px' }}
         >
           {isSaving ? 'Adding...' : 'Add'}
         </button>
         <button
           onClick={handleCancel}
           disabled={isSaving}
-          style={{
-            padding: '4px 12px',
-            borderRadius: '4px',
-            border: '1px solid #E8E8F0',
-            background: '#fff',
-            color: '#6B7280',
-            fontSize: '11px',
-            fontWeight: '700',
-            cursor: isSaving ? 'not-allowed' : 'pointer',
-            fontFamily: "'DM Mono', monospace",
-          }}
+          className="btn-secondary"
+          style={{ padding: '4px 12px', fontSize: '11px' }}
         >
           Cancel
         </button>
       </div>
-      <div style={{ fontSize: '10px', color: '#9CA3AF', marginTop: '4px', fontFamily: "'DM Mono', monospace" }}>
+      <div className="hint-text">
         Press Enter to add, Esc to cancel
       </div>
     </div>

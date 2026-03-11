@@ -2,41 +2,535 @@
   max-width: 1280px;
   margin: 0 auto;
   padding: 2rem;
-  text-align: center;
+  text-align: left;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+/* ========================================
+   BADGES
+   ======================================== */
+
+.quarter-badge {
+  border-radius: 4px;
+  padding: 2px 7px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  font-family: 'DM Mono', monospace;
+  display: inline-block;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  font-family: 'DM Mono', monospace;
+  text-transform: uppercase;
+  display: inline-block;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+/* ========================================
+   BUTTONS
+   ======================================== */
+
+.btn {
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  outline: none;
 }
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.btn-primary {
+  padding: 8px 16px;
+  background: #6C63FF;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: 'DM Mono', monospace;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #5952E0;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(108, 99, 255, 0.4);
+}
+
+.btn-secondary {
+  padding: 8px 16px;
+  background: #fff;
+  color: #6B7280;
+  font-size: 12px;
+  font-weight: 700;
+  border: 1px solid #E8E8F0;
+  font-family: 'DM Mono', monospace;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #F3F4F6;
+}
+
+.btn-add {
+  width: 100%;
+  padding: 10px;
+  margin-top: 8px;
+  border-radius: 8px;
+  background: transparent;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.btn-add-subtask {
+  width: 100%;
+  padding: 8px;
+  margin-top: 4px;
+  border-radius: 6px;
+  background: transparent;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.btn-add-initiative {
+  width: 100%;
+  padding: 12px;
+  margin-top: 8px;
+  border-radius: 12px;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: 'Sora', sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-calendar-nav {
+  background: #fff;
+  border: 1px solid #E8E8F0;
+  border-radius: 8px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 16px;
+  font-family: 'DM Mono', monospace;
+  transition: all 0.2s;
+}
+
+.btn-calendar-nav:hover {
+  background: #F3F4F6;
+}
+
+/* ========================================
+   INPUTS
+   ======================================== */
+
+.input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #E8E8F0;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: 'Inter', sans-serif;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.input:focus {
+  border-color: #6C63FF;
+  box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.1);
+}
+
+.input:disabled {
+  background: #F9FAFB;
+}
+
+.input-small {
+  padding: 4px 6px;
+  font-size: 10px;
+  font-family: 'DM Mono', monospace;
+}
+
+.input-medium {
+  padding: 6px 8px;
+  font-size: 11px;
+}
+
+.input-large {
+  padding: 12px 16px;
+  font-size: 15px;
+}
+
+.textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #E8E8F0;
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: 'Inter', sans-serif;
+  outline: none;
+  resize: vertical;
+  min-height: 60px;
+}
+
+.textarea:focus {
+  border-color: #6C63FF;
+  box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.1);
+}
+
+.input-editing {
+  padding: 4px 8px;
+  border: 2px solid #6C63FF;
+  border-radius: 4px;
+  background: #fff;
+  outline: none;
+  width: 100%;
+}
+
+.textarea-editing {
+  padding: 4px 8px;
+  border: 2px solid #6C63FF;
+  border-radius: 4px;
+  background: #fff;
+  outline: none;
+  width: 100%;
+  resize: vertical;
+  min-height: 60px;
+}
+
+/* ========================================
+   LABELS
+   ======================================== */
+
+.label {
+  display: block;
+  font-size: 10px;
+  color: #9CA3AF;
+  font-family: 'DM Mono', monospace;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.label-form {
+  font-size: 12px;
+  font-weight: 700;
+  color: #374151;
+  margin-bottom: 6px;
+}
+
+/* ========================================
+   CONTAINERS & CARDS
+   ======================================== */
 
 .card {
-  padding: 2em;
+  background: #F9FAFB;
+  border-radius: 16px;
+  padding: 16px 2px;
+  margin-bottom: 24px;
+  border: 1px solid #E8E8F0;
 }
 
-.read-the-docs {
-  color: #888;
+.form-container {
+  padding: 12px;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.form-container-large {
+  padding: 16px;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.add-form-border {
+  margin-top: 8px;
+  border: 2px solid;
+}
+
+/* ========================================
+   MODAL
+   ======================================== */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+}
+
+.modal-content {
+  background: #fff;
+  border-radius: 16px;
+  padding: 32px;
+  max-width: 440px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.modal-icon {
+  font-size: 32px;
+  margin-bottom: 12px;
+}
+
+.modal-title {
+  font-family: 'Sora', sans-serif;
+  font-weight: 800;
+  font-size: 24px;
+  color: #1A1A2E;
+  margin: 0 0 8px;
+}
+
+.modal-description {
+  font-size: 14px;
+  color: #6B7280;
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  line-height: 1.5;
+}
+
+.modal-info-box {
+  margin-top: 20px;
+  padding: 16px;
+  background: #F7F7FC;
+  border-radius: 8px;
+  border: 1px solid #E8E8F0;
+}
+
+/* ========================================
+   CALENDAR
+   ======================================== */
+
+.calendar-container {
+  background: #F9FAFB;
+  border-radius: 16px;
+  padding: 16px 2px;
+  margin-bottom: 24px;
+  border: 1px solid #E8E8F0;
+}
+
+.calendar-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: -12px;
+  padding: 0 12px;
+}
+
+.calendar-months {
+  display: flex;
+  gap: 2px;
+  overflow-x: visible;
+  padding-bottom: 0;
+  justify-content: center;
+}
+
+.calendar-month {
+  min-width: 310px;
+}
+
+.calendar-month-header {
+  font-size: 12px;
+  font-weight: 700;
+  font-family: 'DM Mono', monospace;
+  color: #6B7280;
+  margin-bottom: 8px;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.calendar-day-labels {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: 4px;
+}
+
+.calendar-day-label {
+  font-size: 10px;
+  font-family: 'DM Mono', monospace;
+  color: #9CA3AF;
+  text-align: center;
+  font-weight: 600;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.calendar-day {
+  width: 42px;
+  height: 42px;
+  position: relative;
+  background: transparent;
+  border-radius: 4px;
+}
+
+.calendar-day-today {
+  background: #EEF2FF;
+}
+
+.calendar-day-number {
+  position: absolute;
+  top: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  font-family: 'DM Mono', monospace;
+  color: #6B7280;
+}
+
+.calendar-day-number-today {
+  color: #4F46E5;
+  font-weight: 700;
+}
+
+.calendar-subtask-indicators {
+  position: relative;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 38px;
+}
+
+.calendar-subtask-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 7px;
+  font-weight: 700;
+  color: #fff;
+  font-family: 'DM Mono', monospace;
+  position: relative;
+}
+
+/* ========================================
+   TOOLTIP
+   ======================================== */
+
+.tooltip {
+  position: fixed;
+  background: #fff;
+  border: 1px solid #E8E8F0;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  max-width: 300px;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.tooltip-item {
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+}
+
+.tooltip-item:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.tooltip-item-border {
+  border-bottom: 1px solid #E8E8F0;
+}
+
+.tooltip-title {
+  font-size: 11px;
+  font-weight: 700;
+  font-family: 'Sora', sans-serif;
+  color: #1F2937;
+  margin-bottom: 2px;
+}
+
+.tooltip-task {
+  font-size: 10px;
+  font-family: 'Inter', sans-serif;
+  color: #6B7280;
+  margin-bottom: 2px;
+}
+
+.tooltip-subtask {
+  font-size: 10px;
+  font-family: 'Inter', sans-serif;
+  color: #374151;
+}
+
+/* ========================================
+   UTILITY CLASSES
+   ======================================== */
+
+.hint-text {
+  font-size: 10px;
+  color: #9CA3AF;
+  margin-top: 4px;
+  font-family: 'DM Mono', monospace;
+}
+
+.error-box {
+  padding: 12px 16px;
+  background: #FEF2F2;
+  border: 1px solid #FCA5A5;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.error-text {
+  font-size: 13px;
+  color: #DC2626;
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+}
+
+.editable-hover {
+  cursor: pointer;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+.editable-hover:hover {
+  background: #F3F4F6;
+}
+
+.edit-icon {
+  font-size: 12px;
+  color: #6C63FF;
+  margin-left: 4px;
 }

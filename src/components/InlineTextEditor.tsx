@@ -92,23 +92,22 @@ export function InlineTextEditor({
 
   // If editing, show input
   if (isEditing) {
+    const wrapperStyle: React.CSSProperties = {
+      position: 'relative',
+      flex: 1,
+    };
+
     const commonStyles: React.CSSProperties = {
       ...style,
       ...inputStyle,
-      padding: '4px 8px',
-      border: '2px solid #6C63FF',
-      borderRadius: '4px',
       fontSize: 'inherit',
       fontFamily: 'inherit',
       color: 'inherit',
-      background: '#fff',
-      outline: 'none',
-      width: '100%',
       ...(isSaving && { opacity: 0.6, pointerEvents: 'none' }),
     };
 
     return (
-      <div style={{ position: 'relative', flex: 1 }}>
+      <div style={wrapperStyle}>
         {multiline ? (
           <textarea
             ref={inputRef as React.RefObject<HTMLTextAreaElement>}
@@ -117,11 +116,8 @@ export function InlineTextEditor({
             onKeyDown={handleKeyDown}
             onBlur={handleSave}
             placeholder={placeholder}
-            style={{
-              ...commonStyles,
-              resize: 'vertical',
-              minHeight: '60px',
-            }}
+            className="textarea-editing"
+            style={commonStyles}
             disabled={isSaving}
           />
         ) : (
@@ -133,20 +129,12 @@ export function InlineTextEditor({
             onKeyDown={handleKeyDown}
             onBlur={handleSave}
             placeholder={placeholder}
+            className="input-editing"
             style={commonStyles}
             disabled={isSaving}
           />
         )}
-        <div
-          style={{
-            position: 'absolute',
-            bottom: '-20px',
-            left: 0,
-            fontSize: '10px',
-            color: '#9CA3AF',
-            fontFamily: "'DM Mono', monospace",
-          }}
-        >
+        <div className="hint-text" style={{ position: 'absolute', bottom: '-20px', left: 0 }}>
           {isSaving ? 'Saving...' : multiline ? 'Ctrl+Enter to save, Esc to cancel' : 'Enter to save, Esc to cancel'}
         </div>
       </div>
@@ -156,20 +144,13 @@ export function InlineTextEditor({
   // Display mode with hover effect
   return (
     <span
+      className={`editable-hover ${className || ''}`}
       style={{
         ...style,
-        cursor: 'pointer',
-        position: 'relative',
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: '4px',
-        padding: '2px 4px',
-        borderRadius: '4px',
         ...(showHover && {
           background: '#F3F4F6',
         }),
       }}
-      className={className}
       onClick={() => setIsEditing(true)}
       onMouseEnter={() => setShowHover(true)}
       onMouseLeave={() => setShowHover(false)}
@@ -177,7 +158,7 @@ export function InlineTextEditor({
     >
       {value || <span style={{ color: '#9CA3AF', fontStyle: 'italic' }}>{placeholder}</span>}
       {showHover && (
-        <span style={{ fontSize: '12px', color: '#6C63FF', marginLeft: '4px' }}>✏️</span>
+        <span className="edit-icon">✏️</span>
       )}
     </span>
   );

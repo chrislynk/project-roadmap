@@ -27,43 +27,12 @@ export function AuthModal() {
   };
 
   return (
-    <div style={{
-      position: 'fixed',
-      inset: 0,
-      background: 'rgba(0, 0, 0, 0.5)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 9999,
-      padding: '20px',
-    }}>
-      <div style={{
-        background: '#fff',
-        borderRadius: '16px',
-        padding: '32px',
-        maxWidth: '440px',
-        width: '100%',
-        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
-      }}>
-        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-          <div style={{
-            fontSize: '32px',
-            marginBottom: '12px',
-          }}>🔐</div>
-          <h2 style={{
-            fontFamily: "'Sora', sans-serif",
-            fontWeight: '800',
-            fontSize: '24px',
-            color: '#1A1A2E',
-            margin: '0 0 8px',
-          }}>{mode === 'signin' ? 'Sign In' : 'Create Account'}</h2>
-          <p style={{
-            fontSize: '14px',
-            color: '#6B7280',
-            margin: 0,
-            fontFamily: "'Inter', sans-serif",
-            lineHeight: '1.5',
-          }}>
+    <div className="modal-overlay">
+      <div className="modal-content">
+        <div className="modal-header">
+          <div className="modal-icon">🔐</div>
+          <h2 className="modal-title">{mode === 'signin' ? 'Sign In' : 'Create Account'}</h2>
+          <p className="modal-description">
             {mode === 'signin'
               ? 'Enter your email and password to continue'
               : 'Create an account to sync your progress across devices'}
@@ -72,16 +41,7 @@ export function AuthModal() {
 
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: '16px', marginRight: '8px' }}>
-            <label style={{
-              display: 'block',
-              fontSize: '12px',
-              fontWeight: '700',
-              color: '#374151',
-              marginBottom: '6px',
-              fontFamily: "'DM Mono', monospace",
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-            }}>
+            <label className="label label-form">
               Email Address
             </label>
             <input
@@ -91,18 +51,8 @@ export function AuthModal() {
               placeholder="your@email.com"
               required
               disabled={loading}
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                fontSize: '15px',
-                fontFamily: "'Inter', sans-serif",
-                color: '#374151',
-                border: '2px solid #E8E8F0',
-                borderRadius: '8px',
-                outline: 'none',
-                transition: 'all 0.2s',
-                background: loading ? '#F9FAFB' : '#fff',
-              }}
+              className="input input-large"
+              style={{ border: '2px solid #E8E8F0', width: '100%' }}
               onFocus={(e) => {
                 e.target.style.borderColor = '#6C63FF';
                 e.target.style.boxShadow = '0 0 0 3px rgba(108, 99, 255, 0.1)';
@@ -115,16 +65,7 @@ export function AuthModal() {
           </div>
 
           <div style={{ marginBottom: '16px' }}>
-            <label style={{
-              display: 'block',
-              fontSize: '12px',
-              fontWeight: '700',
-              color: '#374151',
-              marginBottom: '6px',
-              fontFamily: "'DM Mono', monospace",
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-            }}>
+            <label className="label label-form">
               Password
             </label>
             <input
@@ -135,18 +76,8 @@ export function AuthModal() {
               required
               disabled={loading}
               minLength={6}
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                fontSize: '15px',
-                fontFamily: "'Inter', sans-serif",
-                color: '#374151',
-                border: '2px solid #E8E8F0',
-                borderRadius: '8px',
-                outline: 'none',
-                transition: 'all 0.2s',
-                background: loading ? '#F9FAFB' : '#fff',
-              }}
+              className="input input-large"
+              style={{ border: '2px solid #E8E8F0', width: '100%' }}
               onFocus={(e) => {
                 e.target.style.borderColor = '#6C63FF';
                 e.target.style.boxShadow = '0 0 0 3px rgba(108, 99, 255, 0.1)';
@@ -157,31 +88,15 @@ export function AuthModal() {
               }}
             />
             {mode === 'signup' && (
-              <p style={{
-                fontSize: '11px',
-                color: '#9CA3AF',
-                margin: '4px 0 0',
-                fontFamily: "'Inter', sans-serif",
-              }}>
+              <p style={{ fontSize: '11px', color: '#9CA3AF', margin: '4px 0 0', fontFamily: "'Inter', sans-serif" }}>
                 At least 6 characters
               </p>
             )}
           </div>
 
           {error && (
-            <div style={{
-              padding: '12px 16px',
-              background: '#FEF2F2',
-              border: '1px solid #FCA5A5',
-              borderRadius: '8px',
-              marginBottom: '16px',
-            }}>
-              <p style={{
-                fontSize: '13px',
-                color: '#DC2626',
-                margin: 0,
-                fontFamily: "'Inter', sans-serif",
-              }}>
+            <div className="error-box">
+              <p className="error-text">
                 {error}
               </p>
             </div>
@@ -190,18 +105,14 @@ export function AuthModal() {
           <button
             type="submit"
             disabled={loading || !email || !password}
+            className="btn-primary"
             style={{
               width: '100%',
               padding: '14px 24px',
               background: loading || !email || !password ? '#D1D5DB' : '#6C63FF',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '8px',
               fontSize: '15px',
-              fontWeight: '700',
               fontFamily: "'Sora', sans-serif",
               cursor: loading || !email || !password ? 'not-allowed' : 'pointer',
-              transition: 'all 0.2s',
             }}
             onMouseOver={(e) => {
               if (!loading && email && password) {
@@ -222,10 +133,7 @@ export function AuthModal() {
           </button>
         </form>
 
-        <div style={{
-          marginTop: '20px',
-          textAlign: 'center',
-        }}>
+        <div style={{ marginTop: '20px', textAlign: 'center' }}>
           <button
             onClick={() => {
               setMode(mode === 'signin' ? 'signup' : 'signin');
@@ -249,20 +157,8 @@ export function AuthModal() {
           </button>
         </div>
 
-        <div style={{
-          marginTop: '20px',
-          padding: '16px',
-          background: '#F7F7FC',
-          borderRadius: '8px',
-          border: '1px solid #E8E8F0',
-        }}>
-          <p style={{
-            fontSize: '12px',
-            color: '#6B7280',
-            margin: 0,
-            fontFamily: "'Inter', sans-serif",
-            lineHeight: '1.6',
-          }}>
+        <div className="modal-info-box">
+          <p style={{ fontSize: '12px', color: '#6B7280', margin: 0, fontFamily: "'Inter', sans-serif", lineHeight: '1.6' }}>
             <strong style={{ color: '#374151' }}>Sync Across Devices:</strong><br />
             Sign in with the same email on multiple devices to sync your progress in real-time.
           </p>
