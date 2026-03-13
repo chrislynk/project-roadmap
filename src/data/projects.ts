@@ -2,10 +2,16 @@
 // TYPESCRIPT INTERFACES
 // ─────────────────────────────────────────────────────────────────────────────
 
+export interface Step {
+  id: string;
+  text: string;
+}
+
 export interface Subtask {
   id: string;
   text: string;
   due?: string;
+  steps?: Step[];
 }
 
 export interface Task {

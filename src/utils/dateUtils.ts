@@ -42,3 +42,16 @@ export function isSameDay(date1: Date, date2: Date): boolean {
     date1.getDate() === date2.getDate()
   );
 }
+
+export function getQuarterFromDate(date: Date): string | null {
+  if (!date || isNaN(date.getTime())) return null;
+
+  const month = date.getMonth(); // 0-11
+
+  if (month >= 0 && month <= 3) return 'Q1';  // Jan-Apr
+  if (month >= 4 && month <= 6) return 'Q2';  // May-Jul
+  if (month >= 7 && month <= 9) return 'Q3';  // Aug-Oct
+  if (month >= 10 && month <= 11) return 'Q4'; // Nov-Dec
+
+  return null;
+}

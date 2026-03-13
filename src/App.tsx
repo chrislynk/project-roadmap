@@ -11,6 +11,7 @@ import { AuthModal } from './components/AuthModal';
 import { EditModeToggle } from './components/EditModeToggle';
 import { InlineTextEditor } from './components/InlineTextEditor';
 import { AddSubtaskButton } from './components/AddSubtaskButton';
+import { AddStepButton } from './components/AddStepButton';
 import { AddTaskButton } from './components/AddTaskButton';
 import { AddInitiativeButton } from './components/AddInitiativeButton';
 import { SubtaskCalendar } from './components/SubtaskCalendar';
@@ -34,13 +35,16 @@ function StatusBadge({ status }) {
   );
 }
 
-function Checkbox({ checked, onChange, color }) {
+function Checkbox({ checked, onChange, color, size = "normal" }) {
+  const sizeStyles = size === "small"
+    ? { width: "14px", height: "14px", fontSize: "8px" }
+    : { width: "16px", height: "16px", fontSize: "10px" };
+
   return (
     <button
       onClick={onChange}
       style={{
-        width: "16px",
-        height: "16px",
+        ...sizeStyles,
         borderRadius: "4px",
         flexShrink: 0,
         border: checked ? `2px solid ${color}` : "2px solid #D1D5DB",
@@ -53,8 +57,145 @@ function Checkbox({ checked, onChange, color }) {
         marginTop: "2px"
       }}
     >
-      {checked && <span style={{ color: "#fff", fontSize: "10px", lineHeight: 1 }}>✓</span>}
+      {checked && <span style={{ color: "#fff", fontSize: sizeStyles.fontSize, lineHeight: 1 }}>✓</span>}
     </button>
+  );
+}
+
+function StepRow({ step, subtaskId, checked, onToggle, color }) {
+  const { updateStep, deleteStep, moveStepUp, moveStepDown } = useRoadmapCRUD();
+  const { isEditMode } = useEdit();
+  const [showControls, setShowControls] = useState(false);
+
+  const handleSaveText = async (newText: string) => {
+    if (newText !== step.text) {
+      await updateStep(step.id, { text: newText });
+    }
+  };
+
+  const handleDelete = async () => {
+    if (window.confirm(`Delete step "${step.text}"?`)) {
+      try {
+        await deleteStep(step.id);
+      } catch (error) {
+        console.error('Failed to delete step:', error);
+        alert('Failed to delete step. Please try again.');
+      }
+    }
+  };
+
+  const handleMoveUp = async () => {
+    try {
+      await moveStepUp(subtaskId, step.id);
+    } catch (error) {
+      console.error('Failed to move step:', error);
+    }
+  };
+
+  const handleMoveDown = async () => {
+    try {
+      await moveStepDown(subtaskId, step.id);
+    } catch (error) {
+      console.error('Failed to move step:', error);
+    }
+  };
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        gap: "6px",
+        padding: "4px 0",
+        alignItems: "center",
+        borderBottom: "1px solid #F9FAFB",
+        position: "relative",
+      }}
+      onMouseEnter={() => setShowControls(true)}
+      onMouseLeave={() => setShowControls(false)}
+    >
+      <Checkbox checked={checked} onChange={onToggle} color={color} size="small" />
+
+      <InlineTextEditor
+        value={step.text}
+        onSave={handleSaveText}
+        style={{
+          flex: 1,
+          fontSize: "11px",
+          color: checked ? "#9CA3AF" : "#6B7280",
+          lineHeight: "1.4",
+          fontFamily: "'Inter', sans-serif",
+          textDecoration: checked ? "line-through" : "none",
+        }}
+      />
+
+      {isEditMode && showControls && (
+        <div style={{ display: "flex", gap: "2px", flexShrink: 0 }}>
+          <button
+            onClick={handleMoveUp}
+            style={{
+              width: "18px",
+              height: "18px",
+              borderRadius: "3px",
+              border: "1px solid #E5E7EB",
+              background: "#F9FAFB",
+              color: "#6B7280",
+              fontSize: "10px",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: 0,
+            }}
+            title="Move up"
+          >
+            ↑
+          </button>
+
+          <button
+            onClick={handleMoveDown}
+            style={{
+              width: "18px",
+              height: "18px",
+              borderRadius: "3px",
+              border: "1px solid #E5E7EB",
+              background: "#F9FAFB",
+              color: "#6B7280",
+              fontSize: "10px",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: 0,
+            }}
+            title="Move down"
+          >
+            ↓
+          </button>
+
+          <button
+            onClick={handleDelete}
+            style={{
+              width: "18px",
+              height: "18px",
+              borderRadius: "3px",
+              border: "1px solid #FCA5A5",
+              background: "#FEF2F2",
+              color: "#DC2626",
+              fontSize: "10px",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: 0,
+              fontWeight: "bold",
+            }}
+            title="Delete step"
+          >
+            ×
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -62,6 +203,10 @@ function SubtaskRow({ subtask, checked, onToggle, color }) {
   const { updateSubtask, deleteSubtask } = useRoadmapCRUD();
   const { isEditMode } = useEdit();
   const [showDelete, setShowDelete] = useState(false);
+  const [stepsExpanded, setStepsExpanded] = useState(false);
+  const { checkedItems, toggleStep } = useCheckboxState();
+
+  const hasSteps = subtask.steps && subtask.steps.length > 0;
 
   const handleSaveText = async (newText: string) => {
     if (newText !== subtask.text) {
@@ -87,61 +232,121 @@ function SubtaskRow({ subtask, checked, onToggle, color }) {
   };
 
   return (
-    <div
-      style={{ display: "flex", gap: "8px", padding: "6px 0", alignItems: "flex-start", borderBottom: "1px solid #F3F4F6", position: "relative" }}
-      onMouseEnter={() => setShowDelete(true)}
-      onMouseLeave={() => setShowDelete(false)}
-    >
-      <Checkbox checked={checked} onChange={onToggle} color={color} />
-      <InlineTextEditor
-        value={subtask.text}
-        onSave={handleSaveText}
-        style={{
-          flex: 1,
-          fontSize: "12px",
-          color: checked ? "#9CA3AF" : "#374151",
-          lineHeight: "1.5",
-          fontFamily: "'Inter', sans-serif",
-          textDecoration: checked ? "line-through" : "none",
-        }}
-      />
-      <InlineTextEditor
-        value={subtask.due || ''}
-        onSave={handleSaveDue}
-        placeholder="Add due date"
-        style={{
-          fontSize: "10px",
-          color: "#9CA3AF",
-          fontFamily: "'DM Mono', monospace",
-          flexShrink: 0,
-          marginTop: "2px",
-          minWidth: "70px",
-        }}
-      />
-      {isEditMode && showDelete && (
-        <button
-          onClick={handleDelete}
+    <>
+      <div
+        style={{ display: "flex", gap: "8px", padding: "6px 0", alignItems: "flex-start", borderBottom: "1px solid #F3F4F6", position: "relative" }}
+        onMouseEnter={() => setShowDelete(true)}
+        onMouseLeave={() => setShowDelete(false)}
+      >
+        {/* Expand/collapse button for steps - always show in edit mode */}
+        {isEditMode ? (
+          <button
+            onClick={() => setStepsExpanded(!stepsExpanded)}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              padding: "2px 4px",
+              fontSize: "12px",
+              color: hasSteps ? color : "#D1D5DB",
+              transition: "transform 0.2s",
+              transform: stepsExpanded ? "rotate(90deg)" : "rotate(0deg)",
+              flexShrink: 0,
+            }}
+            title={stepsExpanded ? "Hide steps" : "Show steps"}
+          >
+            ▸
+          </button>
+        ) : hasSteps ? (
+          <button
+            onClick={() => setStepsExpanded(!stepsExpanded)}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              padding: "2px 4px",
+              fontSize: "12px",
+              color: color,
+              transition: "transform 0.2s",
+              transform: stepsExpanded ? "rotate(90deg)" : "rotate(0deg)",
+              flexShrink: 0,
+            }}
+            title={stepsExpanded ? "Hide steps" : "Show steps"}
+          >
+            ▸
+          </button>
+        ) : (
+          <div style={{ width: "20px", flexShrink: 0 }} />
+        )}
+
+        <Checkbox checked={checked} onChange={onToggle} color={color} />
+        <InlineTextEditor
+          value={subtask.text}
+          onSave={handleSaveText}
           style={{
-            width: "20px",
-            height: "20px",
-            borderRadius: "4px",
-            border: "1px solid #FCA5A5",
-            background: "#FEF2F2",
-            color: "#DC2626",
+            flex: 1,
             fontSize: "12px",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
-            padding: 0,
+            color: checked ? "#9CA3AF" : "#374151",
+            lineHeight: "1.5",
+            fontFamily: "'Inter', sans-serif",
+            textDecoration: checked ? "line-through" : "none",
           }}
-          title="Delete subtask"
-        >
-          ×
-        </button>
+        />
+        <InlineTextEditor
+          value={subtask.due || ''}
+          onSave={handleSaveDue}
+          placeholder="Add due date"
+          style={{
+            fontSize: "10px",
+            color: "#9CA3AF",
+            fontFamily: "'DM Mono', monospace",
+            flexShrink: 0,
+            marginTop: "2px",
+            minWidth: "70px",
+          }}
+        />
+        {isEditMode && showDelete && (
+          <button
+            onClick={handleDelete}
+            style={{
+              width: "20px",
+              height: "20px",
+              borderRadius: "4px",
+              border: "1px solid #FCA5A5",
+              background: "#FEF2F2",
+              color: "#DC2626",
+              fontSize: "12px",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+              padding: 0,
+            }}
+            title="Delete subtask"
+          >
+            ×
+          </button>
+        )}
+      </div>
+
+      {/* Steps list (when expanded) */}
+      {stepsExpanded && (
+        <div style={{ marginLeft: "36px", marginTop: "4px", marginBottom: "8px" }}>
+          {hasSteps && subtask.steps!.map((step: any) => (
+            <StepRow
+              key={step.id}
+              step={step}
+              subtaskId={subtask.id}
+              checked={!!checkedItems[step.id]}
+              onToggle={() => toggleStep(subtask.id, step.id)}
+              color={color}
+            />
+          ))}
+          <AddStepButton subtaskId={subtask.id} stepsCount={hasSteps ? subtask.steps!.length : 0} color={color} />
+        </div>
       )}
-    </div>
+    </>
   );
 }
 
@@ -552,11 +757,19 @@ function ProjectView({ project, checkedItems, onToggle }) {
 function TaskTableRow({ project, pillar, initiative, task, status, done, total, idx, checkedItems, onToggle, onNavigate }) {
   const [expanded, setExpanded] = useState(false);
   const [hoveredSubtaskId, setHoveredSubtaskId] = useState<string | null>(null);
-  const { updateSubtask, deleteSubtask, addSubtask } = useRoadmapCRUD();
+  const [expandedSteps, setExpandedSteps] = useState<Set<string>>(new Set());
+  const { updateTask, updateSubtask, deleteSubtask, addSubtask, addStep, updateStep, deleteStep, moveStepUp, moveStepDown } = useRoadmapCRUD();
   const { isEditMode } = useEdit();
+  const { toggleStep } = useCheckboxState();
   const isLearning = task.type === "learning";
   const rowColor = isLearning ? "#F59E0B" : pillar.color;
   const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+
+  const handleSaveTaskDue = async (newDue: string) => {
+    if (newDue !== (task.due || '')) {
+      await updateTask(task.id, { due: newDue || undefined });
+    }
+  };
 
   const handleSaveSubtaskText = async (subtaskId: string, newText: string, currentText: string) => {
     if (newText !== currentText) {
@@ -618,8 +831,18 @@ function TaskTableRow({ project, pillar, initiative, task, status, done, total, 
           {initiative.title}
         </div>
         {/* Due date */}
-        <div style={{ fontSize: "11px", fontFamily: "'DM Mono', monospace", color: status === "overdue" ? "#EF4444" : status === "due-soon" ? "#F59E0B" : "#6B7280" }}>
-          {task.due || "—"}
+        <div onClick={(e) => e.stopPropagation()}>
+          <InlineTextEditor
+            value={task.due || ''}
+            onSave={handleSaveTaskDue}
+            placeholder="Add due date"
+            style={{
+              fontSize: "11px",
+              fontFamily: "'DM Mono', monospace",
+              color: status === "overdue" ? "#EF4444" : status === "due-soon" ? "#F59E0B" : "#6B7280",
+              minWidth: "70px",
+            }}
+          />
         </div>
         {/* Progress */}
         <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
@@ -638,61 +861,145 @@ function TaskTableRow({ project, pillar, initiative, task, status, done, total, 
           <div style={{ fontSize: "10px", color: "#9CA3AF", fontFamily: "'DM Mono', monospace", marginBottom: "6px", textTransform: "uppercase", letterSpacing: "0.06em" }}>Subtasks</div>
           {task.subtasks.map(s => {
             const checked = !!checkedItems[s.id];
+            const hasSteps = s.steps && s.steps.length > 0;
+            const stepsExpanded = expandedSteps.has(s.id);
+
             return (
-              <div
-                key={s.id}
-                style={{ display: "flex", gap: "8px", padding: "5px 0", alignItems: "flex-start", borderBottom: "1px solid #EEEEF8", position: "relative" }}
-                onMouseEnter={() => setHoveredSubtaskId(s.id)}
-                onMouseLeave={() => setHoveredSubtaskId(null)}
-              >
-                <Checkbox checked={checked} onChange={() => onToggle(s.id)} color={rowColor} />
-                <InlineTextEditor
-                  value={s.text}
-                  onSave={(newText) => handleSaveSubtaskText(s.id, newText, s.text)}
-                  style={{
-                    flex: 1,
-                    fontSize: "12px",
-                    color: checked ? "#9CA3AF" : "#374151",
-                    fontFamily: "'Inter', sans-serif",
-                    textDecoration: checked ? "line-through" : "none",
-                    lineHeight: "1.5",
-                  }}
-                />
-                <InlineTextEditor
-                  value={s.due || ''}
-                  onSave={(newDue) => handleSaveSubtaskDue(s.id, newDue, s.due)}
-                  placeholder="Add due date"
-                  style={{
-                    fontSize: "10px",
-                    color: "#9CA3AF",
-                    fontFamily: "'DM Mono', monospace",
-                    flexShrink: 0,
-                    marginTop: "2px",
-                    minWidth: "70px",
-                  }}
-                />
-                {isEditMode && hoveredSubtaskId === s.id && (
-                  <button
-                    onClick={() => handleDeleteSubtask(s.id, s.text)}
+              <div key={s.id}>
+                <div
+                  style={{ display: "flex", gap: "8px", padding: "5px 0", alignItems: "flex-start", borderBottom: "1px solid #EEEEF8", position: "relative" }}
+                  onMouseEnter={() => setHoveredSubtaskId(s.id)}
+                  onMouseLeave={() => setHoveredSubtaskId(null)}
+                >
+                  {/* Expand/collapse button for steps - always show in edit mode */}
+                  {isEditMode ? (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setExpandedSteps(prev => {
+                          const newSet = new Set(prev);
+                          if (newSet.has(s.id)) {
+                            newSet.delete(s.id);
+                          } else {
+                            newSet.add(s.id);
+                          }
+                          return newSet;
+                        });
+                      }}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        padding: "2px 4px",
+                        fontSize: "12px",
+                        color: hasSteps ? rowColor : "#D1D5DB",
+                        transition: "transform 0.2s",
+                        transform: stepsExpanded ? "rotate(90deg)" : "rotate(0deg)",
+                        flexShrink: 0,
+                      }}
+                      title={stepsExpanded ? "Hide steps" : "Show steps"}
+                    >
+                      ▸
+                    </button>
+                  ) : hasSteps ? (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setExpandedSteps(prev => {
+                          const newSet = new Set(prev);
+                          if (newSet.has(s.id)) {
+                            newSet.delete(s.id);
+                          } else {
+                            newSet.add(s.id);
+                          }
+                          return newSet;
+                        });
+                      }}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        padding: "2px 4px",
+                        fontSize: "12px",
+                        color: rowColor,
+                        transition: "transform 0.2s",
+                        transform: stepsExpanded ? "rotate(90deg)" : "rotate(0deg)",
+                        flexShrink: 0,
+                      }}
+                      title={stepsExpanded ? "Hide steps" : "Show steps"}
+                    >
+                      ▸
+                    </button>
+                  ) : (
+                    <div style={{ width: "20px", flexShrink: 0 }} />
+                  )}
+
+                  <Checkbox checked={checked} onChange={() => onToggle(s.id)} color={rowColor} />
+                  <InlineTextEditor
+                    value={s.text}
+                    onSave={(newText) => handleSaveSubtaskText(s.id, newText, s.text)}
                     style={{
-                      width: "20px",
-                      height: "20px",
-                      borderRadius: "4px",
-                      border: "1px solid #FCA5A5",
-                      background: "#FEF2F2",
-                      color: "#DC2626",
+                      flex: 1,
                       fontSize: "12px",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      flexShrink: 0,
-                      padding: 0,
+                      color: checked ? "#9CA3AF" : "#374151",
+                      fontFamily: "'Inter', sans-serif",
+                      textDecoration: checked ? "line-through" : "none",
+                      lineHeight: "1.5",
                     }}
-                    title="Delete subtask"
-                  >
-                    ×
-                  </button>
+                  />
+                  <InlineTextEditor
+                    value={s.due || ''}
+                    onSave={(newDue) => handleSaveSubtaskDue(s.id, newDue, s.due)}
+                    placeholder="Add due date"
+                    style={{
+                      fontSize: "10px",
+                      color: "#9CA3AF",
+                      fontFamily: "'DM Mono', monospace",
+                      flexShrink: 0,
+                      marginTop: "2px",
+                      minWidth: "70px",
+                    }}
+                  />
+                  {isEditMode && hoveredSubtaskId === s.id && (
+                    <button
+                      onClick={() => handleDeleteSubtask(s.id, s.text)}
+                      style={{
+                        width: "20px",
+                        height: "20px",
+                        borderRadius: "4px",
+                        border: "1px solid #FCA5A5",
+                        background: "#FEF2F2",
+                        color: "#DC2626",
+                        fontSize: "12px",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexShrink: 0,
+                        padding: 0,
+                      }}
+                      title="Delete subtask"
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+
+                {/* Steps list (when expanded) */}
+                {stepsExpanded && (
+                  <div style={{ marginLeft: "36px", marginTop: "4px", marginBottom: "8px" }}>
+                    {hasSteps && s.steps.map((step: any) => (
+                      <StepRow
+                        key={step.id}
+                        step={step}
+                        subtaskId={s.id}
+                        checked={!!checkedItems[step.id]}
+                        onToggle={() => toggleStep(s.id, step.id)}
+                        color={rowColor}
+                      />
+                    ))}
+                    <AddStepButton subtaskId={s.id} stepsCount={hasSteps ? s.steps.length : 0} color={rowColor} />
+                  </div>
                 )}
               </div>
             );

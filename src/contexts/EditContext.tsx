@@ -10,7 +10,7 @@ interface EditContextType {
 const EditContext = createContext<EditContextType | undefined>(undefined);
 
 export function EditProvider({ children }: { children: ReactNode }) {
-  const [isEditMode, setIsEditMode] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(true)
 
   const toggleEditMode = () => {
     setIsEditMode((prev) => !prev);

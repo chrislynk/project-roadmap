@@ -1,6 +1,6 @@
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { useRoadmap } from '../contexts/RoadmapContext';
-import { parseDue } from '../utils/dateUtils';
+import { parseDue, getQuarterFromDate } from '../utils/dateUtils';
 
 export function useRoadmapCRUD() {
   const { refresh } = useRoadmap();
@@ -123,6 +123,64 @@ export function useRoadmapCRUD() {
       .eq('initiative_id', initiativeId);
   };
 
+  const updateInitiativeQuartersFromTasks = async (initiativeId: string) => {
+    if (!isSupabaseConfigured()) {
+      return;
+    }
+
+    // Get the initiative's internal UUID
+    const { data: initiativeData, error: initiativeError } = await supabase!
+      .from('initiatives')
+      .select('id')
+      .eq('initiative_id', initiativeId)
+      .single();
+
+    if (initiativeError || !initiativeData) {
+      console.error('[CRUD] Failed to find initiative for quarters update:', initiativeError);
+      return;
+    }
+
+    // Get all tasks for this initiative
+    const { data: tasks, error: tasksError } = await supabase!
+      .from('tasks')
+      .select('due')
+      .eq('initiative_id', initiativeData.id);
+
+    if (tasksError) {
+      console.error('[CRUD] Failed to fetch tasks for quarters update:', tasksError);
+      return;
+    }
+
+    // Collect unique quarters from all task due dates
+    const quartersSet = new Set<string>();
+
+    if (tasks && tasks.length > 0) {
+      for (const task of tasks) {
+        if (task.due) {
+          const parsed = parseDue(task.due);
+          if (parsed) {
+            const quarter = getQuarterFromDate(parsed);
+            if (quarter) {
+              quartersSet.add(quarter);
+            }
+          }
+        }
+      }
+    }
+
+    // Convert Set to sorted array: Q1, Q2, Q3, Q4
+    const quarters = Array.from(quartersSet).sort();
+
+    // Update the initiative's quarters array
+    await supabase!
+      .from('initiatives')
+      .update({
+        quarters: quarters,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('initiative_id', initiativeId);
+  };
+
   // ─────────────────────────────────────────────────────────────────────────────
   // SUBTASK OPERATIONS
   // ─────────────────────────────────────────────────────────────────────────────
@@ -159,6 +217,17 @@ export function useRoadmapCRUD() {
 
     // Update parent task's due date based on all subtasks
     await updateTaskDueFromSubtasks((subtaskData as any).tasks.task_id);
+
+    // Get initiative ID to update quarters
+    const { data: taskInfo, error: taskInfoError } = await supabase!
+      .from('tasks')
+      .select('initiative_id, initiatives!inner(initiative_id)')
+      .eq('task_id', (subtaskData as any).tasks.task_id)
+      .single();
+
+    if (!taskInfoError && taskInfo) {
+      await updateInitiativeQuartersFromTasks((taskInfo as any).initiatives.initiative_id);
+    }
 
     // Refresh roadmap data to reflect changes
     refresh();
@@ -199,6 +268,17 @@ export function useRoadmapCRUD() {
     // Update parent task's due date based on all subtasks
     await updateTaskDueFromSubtasks(taskId);
 
+    // Get initiative ID to update quarters
+    const { data: taskInfo, error: taskInfoError } = await supabase!
+      .from('tasks')
+      .select('initiative_id, initiatives!inner(initiative_id)')
+      .eq('task_id', taskId)
+      .single();
+
+    if (!taskInfoError && taskInfo) {
+      await updateInitiativeQuartersFromTasks((taskInfo as any).initiatives.initiative_id);
+    }
+
     refresh();
   };
 
@@ -207,10 +287,10 @@ export function useRoadmapCRUD() {
       throw new Error('Supabase is not configured');
     }
 
-    // Get the subtask's task info before deleting
+    // Get the subtask's task info and UUID before deleting
     const { data: subtaskData, error: fetchError } = await supabase!
       .from('subtasks')
-      .select('task_id, tasks!inner(task_id)')
+      .select('id, task_id, tasks!inner(task_id)')
       .eq('subtask_id', subtaskId)
       .single();
 
@@ -221,6 +301,26 @@ export function useRoadmapCRUD() {
 
     const taskId = (subtaskData as any).tasks.task_id;
 
+    // Cascade delete: Delete all steps for this subtask first (using UUID)
+    await supabase!
+      .from('subtask_steps')
+      .delete()
+      .eq('subtask_id', subtaskData.id); // Use UUID instead of text ID
+
+    // Delete all progress records for steps (format: "subtaskId-step-N")
+    const { data: stepProgressRecords } = await supabase!
+      .from('progress')
+      .select('subtask_id')
+      .like('subtask_id', `${subtaskId}-step-%`);
+
+    if (stepProgressRecords && stepProgressRecords.length > 0) {
+      await supabase!
+        .from('progress')
+        .delete()
+        .like('subtask_id', `${subtaskId}-step-%`);
+    }
+
+    // Now delete the subtask
     const { error } = await supabase!
       .from('subtasks')
       .delete()
@@ -233,6 +333,200 @@ export function useRoadmapCRUD() {
 
     // Update parent task's due date based on remaining subtasks
     await updateTaskDueFromSubtasks(taskId);
+
+    // Get initiative ID to update quarters
+    const { data: taskInfo, error: taskInfoError } = await supabase!
+      .from('tasks')
+      .select('initiative_id, initiatives!inner(initiative_id)')
+      .eq('task_id', taskId)
+      .single();
+
+    if (!taskInfoError && taskInfo) {
+      await updateInitiativeQuartersFromTasks((taskInfo as any).initiatives.initiative_id);
+    }
+
+    refresh();
+  };
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // STEP OPERATIONS
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  const addStep = async (subtaskId: string, step: { step_id: string; text: string; position: number }) => {
+    if (!isSupabaseConfigured()) {
+      throw new Error('Supabase is not configured');
+    }
+
+    // Get the subtask's internal UUID from the subtask_id (human-readable ID)
+    const { data: subtaskData, error: subtaskError } = await supabase!
+      .from('subtasks')
+      .select('id')
+      .eq('subtask_id', subtaskId)
+      .single();
+
+    if (subtaskError || !subtaskData) {
+      console.error('[CRUD] Failed to find subtask:', subtaskError);
+      throw subtaskError || new Error('Subtask not found');
+    }
+
+    const { error } = await supabase!
+      .from('subtask_steps')
+      .insert({
+        subtask_id: subtaskData.id, // Use UUID instead of text ID
+        step_id: step.step_id,
+        text: step.text,
+        position: step.position,
+      });
+
+    if (error) {
+      console.error('[CRUD] Failed to add step:', error);
+      throw error;
+    }
+
+    refresh();
+  };
+
+  const updateStep = async (stepId: string, updates: { text?: string }) => {
+    if (!isSupabaseConfigured()) {
+      throw new Error('Supabase is not configured');
+    }
+
+    const { error } = await supabase!
+      .from('subtask_steps')
+      .update({
+        ...updates,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('step_id', stepId);
+
+    if (error) {
+      console.error('[CRUD] Failed to update step:', error);
+      throw error;
+    }
+
+    refresh();
+  };
+
+  const deleteStep = async (stepId: string) => {
+    if (!isSupabaseConfigured()) {
+      throw new Error('Supabase is not configured');
+    }
+
+    const { error } = await supabase!
+      .from('subtask_steps')
+      .delete()
+      .eq('step_id', stepId);
+
+    if (error) {
+      console.error('[CRUD] Failed to delete step:', error);
+      throw error;
+    }
+
+    refresh();
+  };
+
+  const moveStepUp = async (subtaskId: string, stepId: string) => {
+    if (!isSupabaseConfigured()) {
+      throw new Error('Supabase is not configured');
+    }
+
+    // Get the subtask's internal UUID from the subtask_id (human-readable ID)
+    const { data: subtaskData, error: subtaskError } = await supabase!
+      .from('subtasks')
+      .select('id')
+      .eq('subtask_id', subtaskId)
+      .single();
+
+    if (subtaskError || !subtaskData) {
+      console.error('[CRUD] Failed to find subtask:', subtaskError);
+      throw subtaskError || new Error('Subtask not found');
+    }
+
+    // Get all steps for this subtask
+    const { data: steps, error: fetchError } = await supabase!
+      .from('subtask_steps')
+      .select('step_id, position')
+      .eq('subtask_id', subtaskData.id) // Use UUID instead of text ID
+      .order('position', { ascending: true });
+
+    if (fetchError || !steps) {
+      console.error('[CRUD] Failed to fetch steps:', fetchError);
+      throw fetchError || new Error('Steps not found');
+    }
+
+    // Find the step to move and the one above it
+    const currentIndex = steps.findIndex(s => s.step_id === stepId);
+    if (currentIndex <= 0) {
+      // Already at the top or not found
+      return;
+    }
+
+    const currentStep = steps[currentIndex];
+    const previousStep = steps[currentIndex - 1];
+
+    // Swap positions
+    await supabase!
+      .from('subtask_steps')
+      .update({ position: previousStep.position, updated_at: new Date().toISOString() })
+      .eq('step_id', currentStep.step_id);
+
+    await supabase!
+      .from('subtask_steps')
+      .update({ position: currentStep.position, updated_at: new Date().toISOString() })
+      .eq('step_id', previousStep.step_id);
+
+    refresh();
+  };
+
+  const moveStepDown = async (subtaskId: string, stepId: string) => {
+    if (!isSupabaseConfigured()) {
+      throw new Error('Supabase is not configured');
+    }
+
+    // Get the subtask's internal UUID from the subtask_id (human-readable ID)
+    const { data: subtaskData, error: subtaskError } = await supabase!
+      .from('subtasks')
+      .select('id')
+      .eq('subtask_id', subtaskId)
+      .single();
+
+    if (subtaskError || !subtaskData) {
+      console.error('[CRUD] Failed to find subtask:', subtaskError);
+      throw subtaskError || new Error('Subtask not found');
+    }
+
+    // Get all steps for this subtask
+    const { data: steps, error: fetchError } = await supabase!
+      .from('subtask_steps')
+      .select('step_id, position')
+      .eq('subtask_id', subtaskData.id) // Use UUID instead of text ID
+      .order('position', { ascending: true });
+
+    if (fetchError || !steps) {
+      console.error('[CRUD] Failed to fetch steps:', fetchError);
+      throw fetchError || new Error('Steps not found');
+    }
+
+    // Find the step to move and the one below it
+    const currentIndex = steps.findIndex(s => s.step_id === stepId);
+    if (currentIndex < 0 || currentIndex >= steps.length - 1) {
+      // Already at the bottom or not found
+      return;
+    }
+
+    const currentStep = steps[currentIndex];
+    const nextStep = steps[currentIndex + 1];
+
+    // Swap positions
+    await supabase!
+      .from('subtask_steps')
+      .update({ position: nextStep.position, updated_at: new Date().toISOString() })
+      .eq('step_id', currentStep.step_id);
+
+    await supabase!
+      .from('subtask_steps')
+      .update({ position: currentStep.position, updated_at: new Date().toISOString() })
+      .eq('step_id', nextStep.step_id);
 
     refresh();
   };
@@ -346,6 +640,7 @@ export function useRoadmapCRUD() {
     // If due date was updated, update the parent initiative's due date
     if (updates.due !== undefined && !taskInfoError && taskInfo) {
       await updateInitiativeDueFromTasks((taskInfo as any).initiatives.initiative_id);
+      await updateInitiativeQuartersFromTasks((taskInfo as any).initiatives.initiative_id);
     }
 
     refresh();
@@ -386,6 +681,7 @@ export function useRoadmapCRUD() {
 
     // Update parent initiative's due date based on all tasks
     await updateInitiativeDueFromTasks(initiativeId);
+    await updateInitiativeQuartersFromTasks(initiativeId);
 
     refresh();
   };
@@ -421,6 +717,7 @@ export function useRoadmapCRUD() {
 
     // Update parent initiative's due date based on remaining tasks
     await updateInitiativeDueFromTasks(initiativeId);
+    await updateInitiativeQuartersFromTasks(initiativeId);
 
     refresh();
   };
@@ -709,6 +1006,13 @@ export function useRoadmapCRUD() {
   };
 
   return {
+    // Step operations
+    addStep,
+    updateStep,
+    deleteStep,
+    moveStepUp,
+    moveStepDown,
+
     // Subtask operations
     updateSubtask,
     addSubtask,

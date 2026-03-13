@@ -200,7 +200,13 @@ export function useRoadmapData() {
                     subtask_id,
                     text,
                     due,
-                    position
+                    position,
+                    subtask_steps (
+                      id,
+                      step_id,
+                      text,
+                      position
+                    )
                   )
                 )
               )
@@ -268,6 +274,14 @@ export function useRoadmapData() {
                             id: sub.subtask_id,
                             text: sub.text,
                             due: sub.due,
+                            steps: sub.subtask_steps
+                              ? sub.subtask_steps
+                                  .sort((a: any, b: any) => a.position - b.position)
+                                  .map((step: any) => ({
+                                    id: step.step_id,
+                                    text: step.text,
+                                  }))
+                              : [],
                           })),
                       })),
                   })),
